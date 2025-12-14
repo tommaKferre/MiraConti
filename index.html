@@ -1,0 +1,130 @@
+
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MiraConti — Spese mensili</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2d8f6f">
+  <link rel="icon" href="icons/icon-192.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="app-header gradient">
+      <div class="header-inner">
+        <div>
+          <h1>MiraConti</h1>
+          <p class="subtitle">Spese mensili — semplice e veloce</p>
+        </div>
+        <div class="month-selector">
+          <button id="prev-month" class="small-btn">◀</button>
+          <div id="current-month" class="current-month"></div>
+          <button id="next-month" class="small-btn">▶</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="card actions-card">
+      <div class="row actions">
+        <button id="open-add" class="btn primary full">➕ Nuova spesa</button>
+        <button id="clear-filters" type="button" class="btn">Reset filtri</button>
+      </div>
+    </section>
+
+    <section class="summary-grid">
+      <div class="summary-card">
+        <div class="label">Totale mese</div>
+        <div id="total-month" class="value">€0.00</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Numero spese</div>
+        <div id="count-month" class="value">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Contanti</div>
+        <div id="total-contanti" class="value">€0.00</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Satispay</div>
+        <div id="total-satispay" class="value">€0.00</div>
+      </div>
+    </section>
+
+    <section class="card filters-card" aria-labelledby="filters">
+      <h2 id="filters">Filtri</h2>
+      <div class="row">
+        <label>Categoria</label>
+        <select id="filter-category">
+          <option value="">Tutti</option>
+          <option value="Cibo">Cibo</option>
+          <option value="Trasporti">Trasporti</option>
+          <option value="Svago">Svago</option>
+          <option value="Altro">Altro</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Metodo</label>
+        <select id="filter-method">
+          <option value="">Tutti</option>
+          <option value="Contanti">Contanti</option>
+          <option value="Satispay">Satispay</option>
+          <option value="Hype">Hype</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="card list-card">
+      <h2>Spese</h2>
+      <div class="list-ops">
+        <button id="export-btn" class="btn">Esporta JSON</button>
+        <label class="btn file-btn">Importa JSON
+          <input id="import-file" type="file" accept="application/json">
+        </label>
+      </div>
+      <div id="expenses-list" class="expenses"></div>
+    </section>
+
+    <!-- Modal (slide-up) per add/edit -->
+    <div id="modal" class="modal" aria-hidden="true">
+      <div class="modal-backdrop" id="modal-backdrop"></div>
+      <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <header class="modal-header"><h3 id="modal-title">Aggiungi spesa</h3><button id="modal-close" class="btn">✕</button></header>
+        <form id="modal-form">
+          <div class="row"><label>Importo</label><input id="m-amount" type="number" min="0.01" step="0.01" placeholder="€" required></div>
+          <div class="row"><label>Data</label><input id="m-date" type="date" required></div>
+          <div class="row"><label>Categoria</label><select id="m-category"><option value="Cibo">Cibo</option><option value="Trasporti">Trasporti</option><option value="Svago">Svago</option><option value="Altro">Altro</option></select></div>
+          <div class="row"><label>Metodo</label><select id="m-method"><option value="Contanti">Contanti</option><option value="Satispay">Satispay</option><option value="Hype">Hype</option></select></div>
+          <div class="row"><label>Nota (opz.)</label><input id="m-note" type="text" placeholder="es. pranzo con Marco"></div>
+          <div class="row actions">
+            <button id="m-save" class="btn primary full" type="submit">Aggiungi</button>
+            <button id="m-cancel" type="button" class="btn">Annulla</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Confirm modal (reusable) -->
+    <div id="confirm-modal" class="modal" aria-hidden="true">
+      <div class="modal-backdrop" id="confirm-backdrop"></div>
+      <div class="modal-sheet small" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+        <h3 id="confirm-title">Conferma</h3>
+        <p id="confirm-msg">Sei sicuro?</p>
+        <div class="row actions"><button id="confirm-yes" class="btn primary">Sì</button><button id="confirm-no" class="btn">No</button></div>
+      </div>
+    </div>
+
+    <!-- Toasts -->
+    <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
+
+    <button id="fab-add" class="fab" aria-label="Aggiungi spesa">+</button>
+*** End Patch
+    <footer class="app-footer">
+      <small>Made with ♥ — offline PWA</small>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

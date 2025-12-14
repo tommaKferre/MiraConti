@@ -1,0 +1,49 @@
+:root{
+  --bg:#f6f7f8;
+  --card:#ffffff;
+  --accent:#2d8f6f;
+  --muted:#6c757d;
+  --danger:#e55353;
+  font-size:16px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,'Helvetica Neue',Arial; background:var(--bg); margin:0; color:#111}
+.app{max-width:640px;margin:0 auto;padding:16px}
+.app-header{padding:0;margin-bottom:12px;border-radius:12px;overflow:hidden}
+.app-header.gradient{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:18px}
+.app-header .header-inner{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.app-header h1{margin:0;font-size:1.4rem}
+.subtitle{margin:4px 0 0;color:rgba(255,255,255,0.9)}
+.month-selector{display:flex;align-items:center;gap:8px}
+.small-btn{background:rgba(255,255,255,0.15);border:0;color:white;padding:8px 12px;border-radius:8px}
+.current-month{font-weight:700}
+.card{background:var(--card);border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:0 4px 18px rgba(16,24,32,0.04)}
+.card h2{margin:0 0 8px;font-size:1rem}
+.row{display:flex;flex-direction:column;margin-bottom:8px}
+.row label{font-size:.8rem;color:var(--muted);margin-bottom:6px}
+input[type=text],input[type=number],input[type=date],input[type=month],select{padding:10px;border-radius:8px;border:1px solid #e6e6e6;font-size:1rem}
+.actions{display:flex;gap:8px}
+.btn{padding:10px 12px;border-radius:10px;border:0;background:#e9ecef;color:#111;font-weight:600}
+.btn.primary{background:var(--accent);color:white}
+.file-btn{display:inline-flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.file-btn input{position:absolute;opacity:0;left:0;top:0;width:100%;height:100%;cursor:pointer}
+.list-ops{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.expenses{list-style:none;padding:0;margin:0}
+.expenses .expense-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #f0f0f0}
+.expenses .expense-item:last-child{border-bottom:none}
+.expense-left{display:flex;flex-direction:column}
+.expense-meta{font-size:.8rem;color:var(--muted)}
+.expense-amount{font-weight:700;font-size:1rem;color:#111}
+.summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px}
+.summary-card{background:white;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-align:center}
+.summary-card .label{color:var(--muted);font-size:.85rem}
+.summary-card .value{font-weight:800;font-size:1.1rem;margin-top:6px}
+.app-footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:8px}
+
+@media (min-width:520px){
+  .row{flex-direction:row;align-items:center}
+  .row label{width:30%}
+  .row input,.row select{width:70%}
+  .totals{grid-template-columns:repeat(4,1fr)}
+}
