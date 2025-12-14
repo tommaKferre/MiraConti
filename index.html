@@ -3,118 +3,88 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MiraConti — Spese mensili</title>
-  <link rel="manifest" href="manifest.json" />
+  <title>MiraConti</title>
   <meta name="theme-color" content="#2d8f6f">
-  <link rel="icon" href="icons/icon-192.svg">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <main class="app">
-    <header class="app-header gradient">
-      <div class="header-inner">
-        <h1>MiraConti</h1>
-        <p class="subtitle">Gestione semplice delle spese</p>
-      </div>
-    </header>
+<main class="app">
 
-    <!-- Navigation buttons for different pages -->
-    <nav class="navigation">
-      <button id="nav-add-expense" class="btn primary">Aggiungi Spesa</button>
-      <button id="nav-filter-cash" class="btn">Filtra Contanti</button>
-      <button id="nav-filter-satispay" class="btn">Filtra Satispay</button>
-      <button id="nav-filter-hype" class="btn">Filtra Hype</button>
-    </nav>
+<header class="app-header gradient">
+  <h1>MiraConti</h1>
+  <p class="subtitle">Gestione semplice delle spese</p>
+  <button id="theme-toggle" class="theme-toggle" aria-label="Tema">
+  🌙
+</button>
+</header>
 
-    <!-- Section for adding a new expense -->
-    <section id="page-add-expense" class="page hidden">
-      <h2>Aggiungi Spesa</h2>
-      <form id="add-expense-form">
-        <!-- Input fields for expense details -->
-        <div class="row">
-          <label for="amount">Importo</label>
-          <input type="number" id="amount" required>
-        </div>
-        <div class="row">
-          <label for="date">Data</label>
-          <input type="date" id="date" required>
-        </div>
-        <div class="row">
-          <label for="category">Categoria</label>
-          <input type="text" id="category">
-        </div>
-        <div class="row">
-          <label for="method">Metodo</label>
-          <select id="method">
-            <option value="contanti">Contanti</option>
-            <option value="satispay">Satispay</option>
-            <option value="hype">Hype</option>
-          </select>
-        </div>
-        <div class="row">
-          <label for="note">Nota</label>
-          <textarea id="note"></textarea>
-        </div>
-        <button type="submit" class="btn primary">Salva</button>
-      </form>
-    </section>
+<!-- FILTRI -->
+<section class="filters">
+  <select id="filter-method">
+    <option value="">Tutti i metodi</option>
+    <option value="contanti">Contanti</option>
+    <option value="satispay">Satispay</option>
+    <option value="hype">Hype</option>
+  </select>
 
-    <section id="page-filter-cash" class="page hidden">
-      <h2>Spese Contanti</h2>
-      <div id="expenses-cash-list" class="expenses"></div>
-      <button id="nav-to-add-expense" class="btn primary">Aggiungi Spesa</button>
-    </section>
+  <select id="filter-category">
+    <option value="">Tutte le categorie</option>
+    <option value="Cibo">Cibo</option>
+    <option value="Trasporti">Trasporti</option>
+    <option value="Svago">Svago</option>
+    <option value="Altro">Altro</option>
+  </select>
 
-    <section id="page-filter-satispay" class="page hidden">
-      <h2>Spese Satispay</h2>
-      <div id="expenses-satispay-list" class="expenses"></div>
-      <button id="nav-to-add-expense" class="btn primary">Aggiungi Spesa</button>
-    </section>
+  <button id="clear-filters" class="btn">Reset</button>
+</section>
 
-    <section id="page-filter-hype" class="page hidden">
-      <h2>Spese Hype</h2>
-      <div id="expenses-hype-list" class="expenses"></div>
-      <button id="nav-to-add-expense" class="btn primary">Aggiungi Spesa</button>
-    </section>
+<!-- LISTA -->
+<section>
+  <h2 id="current-month"></h2>
+  <div id="expenses-list" class="expenses"></div>
+</section>
 
-    <!-- Modal (slide-up) per add/edit -->
-    <div id="modal" class="modal" aria-hidden="true">
-      <div class="modal-backdrop" id="modal-backdrop"></div>
-      <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <header class="modal-header"><h3 id="modal-title">Aggiungi spesa</h3><button id="modal-close" class="btn">✕</button></header>
-        <form id="modal-form">
-          <div class="row"><label>Importo</label><input id="m-amount" type="number" min="0.01" step="0.01" placeholder="€" required></div>
-          <div class="row"><label>Data</label><input id="m-date" type="date" required></div>
-          <div class="row"><label>Categoria</label><select id="m-category"><option value="Cibo">Cibo</option><option value="Trasporti">Trasporti</option><option value="Svago">Svago</option><option value="Altro">Altro</option></select></div>
-          <div class="row"><label>Metodo</label><select id="m-method"><option value="Contanti">Contanti</option><option value="Satispay">Satispay</option><option value="Hype">Hype</option></select></div>
-          <div class="row"><label>Nota (opz.)</label><input id="m-note" type="text" placeholder="es. pranzo con Marco"></div>
-          <div class="row actions">
-            <button id="m-save" class="btn primary full" type="submit">Aggiungi</button>
-            <button id="m-cancel" type="button" class="btn">Annulla</button>
-          </div>
-        </form>
-      </div>
-    </div>
+<!-- TOTALI -->
+<footer class="totals">
+  <div>Totale mese: <strong id="total-month">€0,00</strong></div>
+  <div>Contanti: <span id="total-contanti">€0,00</span></div>
+  <div>Satispay: <span id="total-satispay">€0,00</span></div>
+  <div>Hype: <span id="total-hype">€0,00</span></div>
+</footer>
 
-    <!-- Confirm modal (reusable) -->
-    <div id="confirm-modal" class="modal" aria-hidden="true">
-      <div class="modal-backdrop" id="confirm-backdrop"></div>
-      <div class="modal-sheet small" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
-        <h3 id="confirm-title">Conferma</h3>
-        <p id="confirm-msg">Sei sicuro?</p>
-        <div class="row actions"><button id="confirm-yes" class="btn primary">Sì</button><button id="confirm-no" class="btn">No</button></div>
-      </div>
-    </div>
+<!-- GRAFICI -->
+<canvas id="chart" height="180"></canvas>
 
-    <!-- Toasts -->
-    <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
+<!-- FAB -->
+<button id="fab-add" class="fab">+</button>
 
-    <button id="fab-add" class="fab" aria-label="Aggiungi spesa">+</button>
-    <footer class="app-footer">
-      <small>Made with ♥ — offline PWA</small>
-    </footer>
-  </main>
+<!-- MODAL -->
+<div id="modal" class="modal hidden">
+  <div class="modal-sheet">
+    <h3 id="modal-title">Aggiungi spesa</h3>
+    <form id="modal-form">
+      <input id="m-amount" type="number" step="0.01" required placeholder="Importo €">
+      <input id="m-date" type="date" required>
+      <select id="m-category">
+        <option>Cibo</option>
+        <option>Trasporti</option>
+        <option>Svago</option>
+        <option>Altro</option>
+      </select>
+      <select id="m-method">
+        <option value="contanti">Contanti</option>
+        <option value="satispay">Satispay</option>
+        <option value="hype">Hype</option>
+      </select>
+      <input id="m-note" placeholder="Nota (opzionale)">
+      <button class="btn primary" type="submit">Salva</button>
+      <button id="modal-cancel" type="button" class="btn">Annulla</button>
+    </form>
+  </div>
+</div>
 
-  <script src="app.js"></script>
+<script src="app.js"></script>
+</main>
 </body>
 </html>
