@@ -33,32 +33,34 @@ if(dateEl) dateEl.valueAsDate = new Date()
 // Format currency
 const fmt = new Intl.NumberFormat('it-IT', {style:'currency',currency:'EUR'})
 
-// Load from LocalStorage
-function load(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY)
-    expenses = raw ? JSON.parse(raw) : []
-  }catch(e){
-    expenses = []
+// Function to load expenses from LocalStorage
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    expenses = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    expenses = [];
   }
 }
 
-// Save to LocalStorage
-function save(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses))
+// Function to save expenses to LocalStorage
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
 }
 
-// Add expense
-function addExpense({amount,date,category,method,note}){
+// Function to add a new expense
+function addExpense({ amount, date, category, method, note }) {
   const expense = {
     id: Date.now().toString(),
     amount: Number(amount),
     date: new Date(date).toISOString(),
-    category,method,note
-  }
-  expenses.push(expense)
-  save()
-  render()
+    category,
+    method,
+    note,
+  };
+  expenses.push(expense);
+  save();
+  render();
 }
 
 // Delete expense (undo via toast)
