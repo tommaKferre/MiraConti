@@ -48,7 +48,7 @@ function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
 }
 
-// Function to add a new expense
+// Ensure filtered views are updated after adding an expense
 function addExpense({ amount, date, category, method, note }) {
   const expense = {
     id: Date.now().toString(),
@@ -61,6 +61,9 @@ function addExpense({ amount, date, category, method, note }) {
   expenses.push(expense);
   save();
   render();
+  renderFilteredExpenses('contanti', 'expenses-cash-list');
+  renderFilteredExpenses('satispay', 'expenses-satispay-list');
+  renderFilteredExpenses('hype', 'expenses-hype-list');
 }
 
 // Delete expense (undo via toast)
