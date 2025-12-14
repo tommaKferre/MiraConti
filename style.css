@@ -87,3 +87,25 @@ input[type=text],input[type=number],input[type=date],input[type=month],select{pa
   .row input,.row select{width:70%}
   .totals{grid-template-columns:repeat(4,1fr)}
 }
+
+/* Ensure payment method views are visually distinct */
+.page {
+  padding: 16px;
+}
+
+.page h2 {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.expenses {
+  margin-top: 16px;
+}
+
+/* Style the navigation button to add expense */
+#nav-to-add-expense {
+  display: block;
+  margin: 16px auto;
+  padding: 12px 16px;
+  font-size: 1rem;
+}

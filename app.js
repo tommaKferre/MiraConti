@@ -172,7 +172,7 @@ function importJSONFile(file){
   reader.readAsText(file)
 }
 
-// Navigation logic
+// Updated navigation logic
 const pages = {
   addExpense: document.getElementById('page-add-expense'),
   filterCash: document.getElementById('page-filter-cash'),
@@ -184,7 +184,8 @@ const navButtons = {
   addExpense: document.getElementById('nav-add-expense'),
   filterCash: document.getElementById('nav-filter-cash'),
   filterSatispay: document.getElementById('nav-filter-satispay'),
-  filterHype: document.getElementById('nav-filter-hype')
+  filterHype: document.getElementById('nav-filter-hype'),
+  toAddExpense: document.querySelectorAll('#nav-to-add-expense')
 };
 
 function showPage(pageKey) {
@@ -196,6 +197,7 @@ navButtons.addExpense.addEventListener('click', () => showPage('addExpense'));
 navButtons.filterCash.addEventListener('click', () => showPage('filterCash'));
 navButtons.filterSatispay.addEventListener('click', () => showPage('filterSatispay'));
 navButtons.filterHype.addEventListener('click', () => showPage('filterHype'));
+navButtons.toAddExpense.forEach(button => button.addEventListener('click', () => showPage('addExpense')));
 
 // Render filtered expenses
 function renderFilteredExpenses(method, containerId) {
