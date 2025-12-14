@@ -41,6 +41,32 @@ input[type=text],input[type=number],input[type=date],input[type=month],select{pa
 .summary-card .value{font-weight:800;font-size:1.1rem;margin-top:6px}
 .app-footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:8px}
 
+/* Add styles for navigation */
+.navigation {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 16px;
+}
+
+/* Hide inactive pages */
+.page {
+  display: none;
+}
+.page.hidden {
+  display: none;
+}
+.page:not(.hidden) {
+  display: block;
+}
+
+/* Adjust button styles for navigation */
+.navigation .btn {
+  flex: 1;
+  margin: 0 4px;
+  padding: 12px;
+  font-size: 1rem;
+}
+
 @media (min-width:520px){
   .row{flex-direction:row;align-items:center}
   .row label{width:30%}

@@ -170,6 +170,55 @@ function importJSONFile(file){
   reader.readAsText(file)
 }
 
+// Navigation logic
+const pages = {
+  addExpense: document.getElementById('page-add-expense'),
+  filterCash: document.getElementById('page-filter-cash'),
+  filterSatispay: document.getElementById('page-filter-satispay'),
+  filterHype: document.getElementById('page-filter-hype')
+};
+
+const navButtons = {
+  addExpense: document.getElementById('nav-add-expense'),
+  filterCash: document.getElementById('nav-filter-cash'),
+  filterSatispay: document.getElementById('nav-filter-satispay'),
+  filterHype: document.getElementById('nav-filter-hype')
+};
+
+function showPage(pageKey) {
+  Object.values(pages).forEach(page => page.classList.add('hidden'));
+  pages[pageKey].classList.remove('hidden');
+}
+
+navButtons.addExpense.addEventListener('click', () => showPage('addExpense'));
+navButtons.filterCash.addEventListener('click', () => showPage('filterCash'));
+navButtons.filterSatispay.addEventListener('click', () => showPage('filterSatispay'));
+navButtons.filterHype.addEventListener('click', () => showPage('filterHype'));
+
+// Render filtered expenses
+function renderFilteredExpenses(method, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const filtered = expenses.filter(e => e.method === method);
+  filtered.forEach(expense => {
+    const item = document.createElement('div');
+    item.className = 'expense-item';
+    item.innerHTML = `
+      <div class="expense-left">
+        <div>${expense.category || 'N/A'}</div>
+        <div class="expense-meta">${new Date(expense.date).toLocaleDateString()}</div>
+      </div>
+      <div class="expense-amount">${fmt.format(expense.amount)}</div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+// Update filtered pages on load
+renderFilteredExpenses('contanti', 'expenses-cash-list');
+renderFilteredExpenses('satispay', 'expenses-satispay-list');
+renderFilteredExpenses('hype', 'expenses-hype-list');
+
 // Events
 if(form){
   form.addEventListener('submit',e=>{
