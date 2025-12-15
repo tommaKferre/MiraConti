@@ -1,90 +1,107 @@
 <!doctype html>
 <html lang="it">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MiraConti</title>
-  <meta name="theme-color" content="#2d8f6f">
+  <meta name="theme-color" content="#020617">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-<main class="app">
+  <main class="app">
 
-<header class="app-header gradient">
-  <h1>MiraConti</h1>
-  <p class="subtitle">Gestione semplice delle spese</p>
-  <button id="theme-toggle" class="theme-toggle" aria-label="Tema">
-  🌙
-</button>
-</header>
+    <header class="app-header">
+      <h1 class="app-title">MiraConti</h1>
+      <p class="subtitle">Non spendere tutto in birre 🍺</p>
+    </header>
 
-<!-- FILTRI -->
-<section class="filters">
-  <select id="filter-method">
-    <option value="">Tutti i metodi</option>
-    <option value="contanti">Contanti</option>
-    <option value="satispay">Satispay</option>
-    <option value="hype">Hype</option>
-  </select>
+    <!-- SEZIONE DEDICATA BIRRA -->
+    <section class="beer-section">
+      <div class="beer-counter">
+        <h2>🍺 Birre mese</h2>
+        <strong id="beer-month">0</strong>
+      </div>
+    </section>
 
-  <select id="filter-category">
-    <option value="">Tutte le categorie</option>
-    <option value="Cibo">Cibo</option>
-    <option value="Trasporti">Trasporti</option>
-    <option value="Svago">Svago</option>
-    <option value="Altro">Altro</option>
-  </select>
 
-  <button id="clear-filters" class="btn">Reset</button>
-</section>
+    <!-- FILTRI METODO -->
+    <div class="filter-buttons">
+      <button class="filter-btn active" data-method="">Tutti</button>
+      <button class="filter-btn contanti" data-method="contanti">Contanti</button>
+      <button class="filter-btn satispay" data-method="satispay">Satispay</button>
+      <button class="filter-btn hype" data-method="hype">Hype</button>
+    </div>
 
-<!-- LISTA -->
-<section>
-  <h2 id="current-month"></h2>
-  <div id="expenses-list" class="expenses"></div>
-</section>
-
-<!-- TOTALI -->
-<footer class="totals">
-  <div>Totale mese: <strong id="total-month">€0,00</strong></div>
-  <div>Contanti: <span id="total-contanti">€0,00</span></div>
-  <div>Satispay: <span id="total-satispay">€0,00</span></div>
-  <div>Hype: <span id="total-hype">€0,00</span></div>
-</footer>
-
-<!-- GRAFICI -->
-<canvas id="chart" height="180"></canvas>
-
-<!-- FAB -->
-<button id="fab-add" class="fab">+</button>
-
-<!-- MODAL -->
-<div id="modal" class="modal hidden">
-  <div class="modal-sheet">
-    <h3 id="modal-title">Aggiungi spesa</h3>
-    <form id="modal-form">
-      <input id="m-amount" type="number" step="0.01" required placeholder="Importo €">
-      <input id="m-date" type="date" required>
-      <select id="m-category">
+    <!-- FILTRO MESE + CATEGORIA -->
+    <div class="filter-row">
+      <select id="filter-month"></select>
+      <select id="filter-category">
+        <option value="">Tutte le categorie</option>
+        <option>Birra</option>
         <option>Cibo</option>
         <option>Trasporti</option>
         <option>Svago</option>
         <option>Altro</option>
       </select>
-      <select id="m-method">
-        <option value="contanti">Contanti</option>
-        <option value="satispay">Satispay</option>
-        <option value="hype">Hype</option>
-      </select>
-      <input id="m-note" placeholder="Nota (opzionale)">
-      <button class="btn primary" type="submit">Salva</button>
-      <button id="modal-cancel" type="button" class="btn">Annulla</button>
-    </form>
-  </div>
-</div>
+      <button id="clear-filters">Reset</button>
+    </div>
 
-<script src="app.js"></script>
-</main>
+    <!-- LISTA SPESE -->
+    <section>
+      <div id="expenses-list" class="expenses"></div>
+    </section>
+
+    <!-- TOTALI -->
+    <footer class="totals">
+      <div>Totale mese<strong id="total-month">€0,00</strong></div>
+      <div>Contanti<strong id="total-contanti">€0,00</strong></div>
+      <div>Satispay<strong id="total-satispay">€0,00</strong></div>
+      <div>Hype<strong id="total-hype">€0,00</strong></div>
+    </footer>
+
+    <!-- GRAFICO -->
+    <canvas id="chart" height="200"></canvas>
+
+    <!-- FAB -->
+    <button id="fab-add" class="fab">+</button>
+
+    <!-- MODAL -->
+    <div id="modal" class="modal hidden">
+      <div class="modal-sheet">
+        <h3 id="modal-title">Aggiungi spesa</h3>
+        <form id="modal-form">
+          <input id="m-amount" type="number" step="0.01" required placeholder="Importo €">
+          <input id="m-date" type="date" required>
+          <select id="m-category">
+            <option>Birra</option>
+            <option>Cibo</option>
+            <option>Trasporti</option>
+            <option>Svago</option>
+            <option>Altro</option>
+          </select>
+          <input id="m-beer-count" type="number" min="1" value="1" placeholder="Quantità birre" style="display:none">
+
+          <select id="m-method">
+            <option value="contanti">Contanti</option>
+            <option value="satispay">Satispay</option>
+            <option value="hype">Hype</option>
+          </select>
+          <input id="m-note" placeholder="Nota (opzionale)">
+          <button class="primary" type="submit">Salva</button>
+          <button id="modal-cancel" type="button">Annulla</button>
+        </form>
+      </div>
+    </div>
+
+  </main>
+  <script src="app.js"></script>
 </body>
+
 </html>

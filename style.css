@@ -1,182 +1,246 @@
-/* =========================
-   DESIGN SYSTEM
-========================= */
 :root {
-  /* Light */
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --primary: #0f766e;        /* teal scuro, molto leggibile */
-  --primary-soft: #ccfbf1;
-  --text: #020617;
-  --muted: #475569;
-  --border: #e2e8f0;
+  --bg: #020617;
+  --surface: #020617;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --border: #1e293b;
 
-  /* Stati */
-  --danger: #dc2626;
-
-  /* UI */
-  --radius-lg: 18px;
-  --radius-md: 14px;
-  --radius-sm: 10px;
-
-  --shadow-sm: 0 2px 6px rgba(0,0,0,.08);
-  --shadow-md: 0 12px 28px rgba(0,0,0,.18);
+  --contanti: #2dd4bf;
+  --satispay: #f87171;
+  --hype: #60a5fa;
+  --radius: 16px;
 }
 
-* { box-sizing: border-box }
-html,body { height:100% }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
-  font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+  font-family: 'Inter', sans-serif;
   background: var(--bg);
   color: var(--text);
 }
 
-/* =========================
-   LAYOUT
-========================= */
 .app {
   max-width: 520px;
-  margin: 0 auto;
-  padding: 16px 14px 90px;
+  margin: auto;
+  padding: 16px 14px 100px;
 }
 
-/* =========================
-   HEADER
-========================= */
+/* HEADER */
 .app-header {
-  background: linear-gradient(135deg,#3aa17e,#256b57);
-  color: white;
-  padding: 22px 18px;
-  border-radius: var(--radius-lg);
+  position: relative;
+  padding: 26px 20px 22px;
+  border-radius: var(--radius);
   margin-bottom: 18px;
-  box-shadow: var(--shadow-md);
+  background: radial-gradient(120px 120px at 20% 20%, rgba(255, 255, 255, .12), transparent 60%), linear-gradient(135deg, #1f8a70, #0f766e);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .15);
+  overflow: hidden;
+}
+
+.app-header::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .12), transparent 70%);
+  opacity: .35;
+  pointer-events: none;
 }
 
 .app-header h1 {
   margin: 0;
-  font-size: 1.5rem;
-  letter-spacing: .3px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.9rem;
+  letter-spacing: .4px;
+  animation: titleIn .7s cubic-bezier(.22, 1, .36, 1) forwards;
+  transform: translateY(12px);
+  opacity: 0;
 }
 
 .subtitle {
   margin-top: 6px;
-  font-size: .9rem;
-  opacity: .9;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: .95rem;
+  opacity: 0;
+  animation: subtitleIn .6s ease forwards;
+  animation-delay: .35s;
 }
 
-/* =========================
-   FILTERS
-========================= */
-.filters {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 10px;
+/* Beer counter */
+.beer-counter {
+  margin: 14px 0;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.beer-counter strong {
+  font-size: 1.5rem;
+  color: #facc15;
+  transition: transform .3s;
+  display: inline-block;
+}
+
+@keyframes titleIn {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes subtitleIn {
+  from {
+    transform: translateY(6px);
+  }
+
+  to {
+    transform: none;
+    opacity: .9;
+  }
+}
+
+@keyframes popBeer {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.5);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* FILTRI */
+.filter-buttons {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 10px;
+}
+
+.filter-btn {
+  flex: 1;
+  padding: 14px 0;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  background: #0f172a;
+  color: var(--muted);
+  cursor: pointer;
+  transition: .2s;
+  text-align: center;
+}
+
+.filter-btn.active {
+  color: white
+}
+
+.filter-btn.contanti.active {
+  background: var(--contanti)
+}
+
+.filter-btn.satispay.active {
+  background: var(--satispay)
+}
+
+.filter-btn.hype.active {
+  background: var(--hype)
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
   margin-bottom: 16px;
 }
 
-select, input {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid #e5e7eb;
-  font-size: .95rem;
-  background: white;
+select,
+button,
+input {
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: #020617;
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
-select:focus, input:focus {
-  outline: none;
-  border-color: var(--primary);
-}
-
-/* =========================
-   BUTTONS
-========================= */
-.btn {
-  border: 0;
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  font-weight: 600;
-  background: #e5e7eb;
-  cursor: pointer;
-}
-
-.btn.primary {
-  background: var(--primary);
-  color: white;
-}
-
-.btn:hover { opacity: .95 }
-
-/* =========================
-   LIST
-========================= */
-h2 {
-  font-size: 1.1rem;
-  margin: 18px 0 10px;
-}
-
+/* LISTA SPESE */
 .expenses {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  margin-top: 16px;
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
 .expense-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid #f1f5f9;
   cursor: pointer;
-  transition: background .15s;
+  transition: .2s;
 }
 
 .expense-item:hover {
-  background: #f8fafc;
+  background: rgba(255, 255, 255, .05);
 }
 
 .expense-item:last-child {
-  border-bottom: none;
+  border: none;
 }
 
-.expense-item strong {
-  font-size: .95rem;
+.badge {
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
-.expense-item small {
-  color: var(--muted);
-  font-size: .8rem;
+.badge.contanti {
+  background: rgba(45, 212, 191, .15);
+  color: #2dd4bf;
 }
 
-.expense-item > div:last-child {
+.badge.satispay {
+  background: rgba(248, 113, 113, .15);
+  color: #f87171;
+}
+
+.badge.hype {
+  background: rgba(96, 165, 250, .15);
+  color: #60a5fa;
+}
+
+.badge.Birra {
+  background: rgba(248, 208, 64, .2);
+  color: #facc15;
   font-weight: 700;
 }
 
-/* =========================
-   TOTALS
-========================= */
+/* TOTALI */
 .totals {
   margin-top: 18px;
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 14px 16px;
-  box-shadow: var(--shadow-sm);
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  font-size: .9rem;
+  gap: 12px;
 }
 
 .totals strong {
-  font-size: 1.1rem;
+  display: block;
+  font-size: 1.2rem;
+  margin-top: 4px;
 }
 
-/* =========================
-   FAB
-========================= */
+/* FAB */
 .fab {
   position: fixed;
   bottom: 22px;
@@ -185,29 +249,19 @@ h2 {
   width: 58px;
   height: 58px;
   border-radius: 50%;
-  border: none;
-  background: var(--primary);
-  color: white;
+  background: var(--contanti);
+  color: black;
   font-size: 2rem;
-  box-shadow: var(--shadow-md);
-  cursor: pointer;
+  border: none;
 }
 
-.fab:active {
-  transform: translateX(-50%) scale(.96);
-}
-
-/* =========================
-   MODAL
-========================= */
+/* MODAL */
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(15,23,42,.45);
+  background: rgba(0, 0, 0, .6);
   display: flex;
   align-items: flex-end;
-  justify-content: center;
-  z-index: 100;
 }
 
 .modal.hidden {
@@ -217,108 +271,66 @@ h2 {
 .modal-sheet {
   width: 100%;
   max-width: 520px;
-  background: white;
-  border-radius: 22px 22px 0 0;
+  background: #020617;
   padding: 20px;
-  box-shadow: var(--shadow-md);
-  animation: slideUp .25s ease;
-}
-
-.modal-sheet h3 {
-  margin: 0 0 12px;
+  border-radius: 20px 20px 0 0;
 }
 
 .modal-sheet form {
   display: grid;
-  gap: 10px;
+  gap: 10px
 }
 
-/* =========================
-   ANIMATIONS
-========================= */
-@keyframes slideUp {
-  from { transform: translateY(40px); opacity: 0 }
-  to   { transform: translateY(0); opacity: 1 }
+.primary {
+  background: var(--contanti);
+  color: black
 }
 
-/* =========================
-   DESKTOP TWEAKS
-========================= */
-@media (min-width: 520px) {
-  .filters {
-    grid-template-columns: 1fr 1fr 120px;
-  }
-}
-.expense-item {
-  animation: popIn .18s ease-out;
-}
-
-@keyframes popIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(.98);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.day-separator {
-  padding: 10px 14px;
-  font-size: .8rem;
-  font-weight: 700;
-  color: var(--muted);
-  background: #f8fafc;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg:#0f172a;
-    --surface:#020617;
-    --text:#e5e7eb;
-    --muted:#94a3b8;
-  }
-
-  body { background: var(--bg); }
-  .expenses, .totals, .modal-sheet { background: var(--surface); }
-}
-body.dark {
-  --bg: #020617;
-  --surface: #020617;
-  --text: #e5e7eb;
-  --muted: #94a3b8;
-  --border: #1e293b;
-  --primary: #2dd4bf;
-  --primary-soft: rgba(45,212,191,.15);
-}
-
-body {
-  background: var(--bg);
-  color: var(--text);
-}
-.theme-toggle {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255,255,255,.18);
-  color: white;
-  font-size: 1.1rem;
-}
-button, .expense-item {
-  min-height: 48px;
-}
-.expense-item {
-  border-bottom: 1px solid var(--border);
-}
-.totals {
-  font-size: 1rem;
-}
-
+.amount,
 .totals strong {
-  display: block;
-  font-size: 1.25rem;
-  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .2px;
+}
+
+.beer-section {
+  margin: 18px 0;
+}
+
+.beer-counter {
+  padding: 20px 16px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #facc15, #fbbf24);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  animation: fadeInUp 0.8s ease forwards;
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+.beer-counter h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.beer-counter strong {
+  font-size: 2rem;
+  color: #1f2937;
+  animation: popBeer 0.6s ease-out;
+}
+
+@keyframes popBeer {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.6); }
+  100% { transform: scale(1); }
+}
+
+@keyframes fadeInUp {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
