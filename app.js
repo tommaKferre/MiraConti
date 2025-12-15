@@ -228,10 +228,22 @@ function openTransactionModal(type = 'expense', transaction = null, presetMethod
   modalTransaction.classList.add('show');
 }
 
+function ensureModalClosed(modal) {
+  modal.classList.remove('show');
+  modal.style.display = 'none';
+}
+
 function closeTransactionModal() {
-  modalTransaction.classList.remove('show');
+  ensureModalClosed(modalTransaction);
   editingId = null;
 }
+
+// Ensure modals are hidden on page load
+window.addEventListener('load', () => {
+  ensureModalClosed(modalTransaction);
+  ensureModalClosed(modalDeposit);
+  ensureModalClosed(modalFriend);
+});
 
 function handleTypeChange() {
   const type = document.getElementById('input-type').value;
