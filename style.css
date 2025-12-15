@@ -52,7 +52,7 @@ body {
   opacity: 0.85;
 }
 
-/* 🍺 BEER HERO - IL VERO FOCUS! */
+/* 🍺 BEER HERO */
 .beer-hero {
   background: linear-gradient(135deg, #fbbf24 0%, #facc15 50%, #fcd34d 100%);
   padding: 32px 24px;
@@ -173,60 +173,7 @@ body {
   color: #64748b;
 }
 
-/* CLASSIFICA AMICI */
-.leaderboard-section {
-  background: var(--surface);
-  padding: 16px;
-  border-radius: var(--radius);
-  margin-bottom: 16px;
-}
-
-.leaderboard-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: var(--bg);
-  border-radius: 12px;
-  margin-bottom: 8px;
-  border-left: 4px solid var(--beer);
-}
-
-.leaderboard-item:last-child {
-  margin-bottom: 0;
-}
-
-.leaderboard-rank {
-  font-size: 1.5rem;
-  font-weight: 800;
-  width: 40px;
-  text-align: center;
-  font-family: 'Space Grotesk', sans-serif;
-}
-
-.leaderboard-rank.first { color: #fbbf24; }
-.leaderboard-rank.second { color: #94a3b8; }
-.leaderboard-rank.third { color: #cd7f32; }
-
-.leaderboard-info {
-  flex: 1;
-}
-
-.leaderboard-name {
-  font-weight: 600;
-  font-size: 1.1rem;
-}
-
-.leaderboard-beers {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--beer);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* GRAFICO BIRRE */
+/* GRAFICI */
 .chart-section {
   background: var(--surface);
   padding: 16px;
@@ -234,8 +181,9 @@ body {
   margin-bottom: 16px;
 }
 
-#beer-chart {
-  width: 100%;
+.chart-container {
+  position: relative;
+  height: 200px;
   margin-top: 12px;
 }
 
@@ -406,7 +354,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
+  padding: 14px;
   background: var(--bg);
   border-radius: 8px;
   margin-bottom: 8px;
@@ -425,11 +373,85 @@ body {
 
 .deposit-name {
   font-weight: 600;
+  font-size: 1rem;
 }
 
 .deposit-amount {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  font-size: 1.1rem;
+}
+
+/* MODAL GESTIONE DEPOSITO */
+.deposit-balance-display {
+  text-align: center;
+  padding: 24px;
+  background: var(--bg);
+  border-radius: 16px;
+  margin-bottom: 20px;
+  border: 2px solid var(--border);
+}
+
+.deposit-balance-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.deposit-balance-amount {
+  font-size: 2.5rem;
+  font-weight: 800;
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--income);
+}
+
+.deposit-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.deposit-action-btn {
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-family: inherit;
+}
+
+.deposit-action-btn:active {
+  transform: scale(0.95);
+}
+
+.deposit-action-btn:hover {
+  border-color: var(--contanti);
+  background: rgba(45, 212, 191, 0.05);
+}
+
+.action-icon {
+  font-size: 2.5rem;
+}
+
+.action-label {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.action-desc {
+  font-size: 0.75rem;
+  color: var(--muted);
 }
 
 /* STATISTICHE */
@@ -521,6 +543,10 @@ body {
 
 .transaction-item.withdrawal {
   border-color: #8b5cf6;
+}
+
+.transaction-item.expense-from-deposit {
+  border-color: #10b981;
 }
 
 .transaction-info {
@@ -617,7 +643,7 @@ body {
   cursor: pointer;
   border-bottom: 1px solid var(--border);
   transition: background 0.2s;
-  min-width: 180px;
+  min-width: 200px;
 }
 
 .quick-item:last-child {

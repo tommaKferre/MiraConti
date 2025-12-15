@@ -4,7 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MiraConti 2.0</title>
-  <meta name="theme-color" content="#020617">
+  <meta name="description" content="Traccia le tue spese mensili - semplice, offline e installabile">
+  <meta name="theme-color" content="#2dd4bf">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
@@ -35,21 +38,7 @@
       </div>
     </section>
 
-    <!-- CLASSIFICA AMICI -->
-    <section class="leaderboard-section">
-      <div class="section-title">
-        🏆 Classifica Birre
-        <button class="btn-icon" id="btn-add-friend">+</button>
-      </div>
-      <div id="leaderboard-list"></div>
-    </section>
-
-    <!-- GRAFICO BIRRE NEL TEMPO -->
-    <section class="chart-section">
-      <div class="section-title">📈 Birre ultimi 6 mesi</div>
-      <canvas id="beer-chart" height="180"></canvas>
-    </section>
-
+    
     <!-- SOLDI: PORTAFOGLIO VISUALE -->
     <section class="wallet-section">
       <div class="wallet-header">
@@ -69,7 +58,7 @@
             <button class="card-btn" data-action="expense" data-method="contanti">- Spesa</button>
           </div>
         </div>
-
+        
         <div class="wallet-card satispay">
           <div class="card-header">
             <span class="card-icon">🔴</span>
@@ -81,7 +70,7 @@
             <button class="card-btn" data-action="expense" data-method="satispay">- Spesa</button>
           </div>
         </div>
-
+        
         <div class="wallet-card hype">
           <div class="card-header">
             <span class="card-icon">🔵</span>
@@ -95,16 +84,25 @@
         </div>
       </div>
     </section>
-
-    <!-- DEPOSITI -->
+    
+    <!-- DEPOSITI MIGLIORATI -->
     <section class="deposits-section">
       <div class="section-title">
         🏦 Depositi
         <button class="btn-icon" id="btn-new-deposit">+</button>
       </div>
+      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 12px;">Tocca un deposito per gestirlo</p>
       <div id="deposits-list"></div>
     </section>
 
+    <!-- GRAFICI -->
+    <section class="chart-section">
+      <div class="section-title">📊 Spese per categoria</div>
+      <div class="chart-container">
+        <canvas id="category-chart"></canvas>
+      </div>
+    </section>
+    
     <!-- STATISTICHE RAPIDE -->
     <section class="stats-section">
       <div class="section-title">📊 Statistiche mese</div>
@@ -125,17 +123,33 @@
         <strong id="stat-beer-spent">€0</strong>
       </div>
     </section>
-
+    
     <!-- FILTRI -->
     <div class="filters">
       <button class="filter-btn active" data-filter="all">Tutti</button>
       <button class="filter-btn" data-filter="expense">Spese</button>
       <button class="filter-btn" data-filter="income">Entrate</button>
-      <button class="filter-btn" data-filter="deposit">Depositi</button>
+      <button class="filter-btn" data-filter="deposit">Verso depositi</button>
+      <button class="filter-btn" data-filter="withdrawal">Da depositi</button>
     </div>
-
+    
     <!-- TRANSAZIONI -->
     <section class="transactions-list" id="transactions-list"></section>
+    
+    <!-- GRAFICI -->
+    <section class="chart-section">
+      <div class="section-title">📈 Birre ultimi 6 mesi</div>
+      <div class="chart-container">
+        <canvas id="beer-chart"></canvas>
+      </div>
+    </section>
+
+    <section class="chart-section">
+      <div class="section-title">💰 Entrate vs Uscite</div>
+      <div class="chart-container">
+        <canvas id="income-expense-chart"></canvas>
+      </div>
+    </section>
 
     <!-- BACKUP -->
     <div style="text-align: center; margin: 20px 0;">
@@ -161,7 +175,7 @@
     </div>
     <div class="quick-item" data-action="deposit">
       <span class="quick-icon">🏦</span>
-      <span>Sposta in deposito</span>
+      <span>Verso Deposito</span>
     </div>
   </div>
 
@@ -176,8 +190,9 @@
           <select id="input-type" class="form-input" required>
             <option value="expense">💸 Spesa</option>
             <option value="income">💰 Entrata</option>
-            <option value="deposit">🏦 Deposito</option>
-            <option value="withdrawal">🏧 Prelievo da deposito</option>
+            <option value="deposit">🏦 Verso Deposito</option>
+            <option value="withdrawal">🏧 Da Deposito</option>
+            <option value="expense-from-deposit">🏦💸 Paga con Deposito</option>
           </select>
         </div>
 
@@ -207,11 +222,6 @@
         <div class="form-group" id="group-beer" style="display: none;">
           <label class="form-label">Quante birre? 🍺</label>
           <input type="number" id="input-beer-count" class="form-input" min="1" value="1">
-        </div>
-
-        <div class="form-group" id="group-friend" style="display: none;">
-          <label class="form-label">Chi ha bevuto?</label>
-          <select id="input-friend" class="form-input"></select>
         </div>
 
         <div class="form-group" id="group-method">
@@ -248,7 +258,7 @@
     </div>
   </div>
 
-  <!-- MODAL DEPOSITO -->
+  <!-- MODAL CREA DEPOSITO -->
   <div class="modal" id="modal-deposit">
     <div class="modal-sheet">
       <h3 class="modal-title">Nuovo deposito</h3>
@@ -269,27 +279,42 @@
     </div>
   </div>
 
-  <!-- MODAL AMICO -->
-  <div class="modal" id="modal-friend">
+  <!-- MODAL GESTISCI DEPOSITO (NUOVO!) -->
+  <div class="modal" id="modal-deposit-manage">
     <div class="modal-sheet">
-      <h3 class="modal-title">Aggiungi amico</h3>
-      <form id="form-friend">
-        <div class="form-group">
-          <label class="form-label">Nome</label>
-          <input type="text" id="friend-name" class="form-input" required placeholder="es: Marco">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Emoji (opzionale)</label>
-          <input type="text" id="friend-emoji" class="form-input" placeholder="es: 😎" maxlength="2">
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="btn-primary">Aggiungi</button>
-          <button type="button" class="btn-secondary" id="btn-cancel-friend">Annulla</button>
-        </div>
-      </form>
+      <h3 class="modal-title" id="deposit-manage-name">Deposito</h3>
+      
+      <div class="deposit-balance-display">
+        <span class="deposit-balance-label">Saldo corrente</span>
+        <div class="deposit-balance-amount" id="deposit-manage-balance">€0,00</div>
+      </div>
+
+      <div class="deposit-actions-grid">
+        <button class="deposit-action-btn" id="btn-deposit-add">
+          <span class="action-icon">💰</span>
+          <span class="action-label">Aggiungi</span>
+          <span class="action-desc">Metti soldi</span>
+        </button>
+
+        <button class="deposit-action-btn" id="btn-deposit-remove">
+          <span class="action-icon">🏧</span>
+          <span class="action-label">Preleva</span>
+          <span class="action-desc">Prendi soldi</span>
+        </button>
+
+        <button class="deposit-action-btn" id="btn-deposit-pay" style="grid-column: 1 / -1;">
+          <span class="action-icon">💸</span>
+          <span class="action-label">Paga con questo</span>
+          <span class="action-desc">Usa per una spesa</span>
+        </button>
+      </div>
+
+      <button type="button" class="btn-secondary" id="btn-close-deposit-manage" style="width: 100%; margin-top: 12px;">Chiudi</button>
     </div>
   </div>
 
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

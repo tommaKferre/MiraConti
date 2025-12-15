@@ -1,24 +1,26 @@
 // STORAGE KEYS
 const STORAGE_KEY = 'miraConti_transactions_v2';
 const DEPOSITS_KEY = 'miraConti_deposits_v2';
-const FRIENDS_KEY = 'miraConti_friends_v2';
 
 // DATA
 let transactions = [];
 let deposits = [];
-let friends = [];
 let currentFilter = 'all';
 let editingId = null;
+
+// CHARTS
+let beerChart = null;
+let categoryChart = null;
+let incomeExpenseChart = null;
 
 // ELEMENTS
 const fab = document.getElementById('fab');
 const quickMenu = document.getElementById('quick-menu');
 const modalTransaction = document.getElementById('modal-transaction');
 const modalDeposit = document.getElementById('modal-deposit');
-const modalFriend = document.getElementById('modal-friend');
+const modalDepositManage = document.getElementById('modal-deposit-manage');
 const formTransaction = document.getElementById('form-transaction');
 const formDeposit = document.getElementById('form-deposit');
-const formFriend = document.getElementById('form-friend');
 
 // FORMATTER
 const fmt = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
@@ -30,12 +32,20 @@ function init() {
   loadData();
   setupEventListeners();
   render();
+  registerServiceWorker();
+}
+
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(() => console.log('✅ Service Worker registrato'))
+      .catch(err => console.log('❌ Service Worker fallito:', err));
+  }
 }
 
 function loadData() {
   transactions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
   deposits = JSON.parse(localStorage.getItem(DEPOSITS_KEY) || '[]');
-  friends = JSON.parse(localStorage.getItem(FRIENDS_KEY) || '[]');
   
   // Depositi di default
   if (deposits.length === 0) {
@@ -56,24 +66,14 @@ function saveDeposits() {
   localStorage.setItem(DEPOSITS_KEY, JSON.stringify(deposits));
 }
 
-function saveFriends() {
-  localStorage.setItem(FRIENDS_KEY, JSON.stringify(friends));
-}
-
-// Utility per aprire e chiudere modali
 function toggleModal(modal, show = true) {
   if (show) {
     modal.classList.add('show');
-    modal.style.pointerEvents = 'all';
-    modal.style.display = 'flex';
   } else {
     modal.classList.remove('show');
-    modal.style.pointerEvents = 'none';
-    modal.style.display = 'none';
   }
 }
 
-// Utility per aggiungere eventi a più elementi
 function addEventToElements(selector, event, handler) {
   document.querySelectorAll(selector).forEach(el => el.addEventListener(event, handler));
 }
@@ -98,7 +98,8 @@ function setupEventListeners() {
   });
   
   // Touch events per mobile
-  fab.addEventListener('touchstart', () => {
+  fab.addEventListener('touchstart', (e) => {
+    e.preventDefault();
     pressTimer = setTimeout(toggleQuickMenu, 300);
   });
   
@@ -106,8 +107,9 @@ function setupEventListeners() {
   
   // Quick menu items
   addEventToElements('.quick-item', 'click', (e) => {
+    const action = e.currentTarget.dataset.action;
     quickMenu.classList.remove('show');
-    openTransactionModal(e.target.dataset.action);
+    openTransactionModal(action);
   });
   
   // Close quick menu on outside click
@@ -123,18 +125,25 @@ function setupEventListeners() {
     openTransactionModal(e.target.dataset.action, null, e.target.dataset.method);
   });
   
-  // Modali
-  document.getElementById('btn-cancel').addEventListener('click', () => toggleModal(modalTransaction, false));
+  // Modali transazione
+  document.getElementById('btn-cancel').addEventListener('click', () => closeTransactionModal());
   formTransaction.addEventListener('submit', handleTransactionSubmit);
   document.getElementById('btn-delete').addEventListener('click', handleDelete);
   
+  // Event listener per cambio tipo e categoria
+  document.getElementById('input-type').addEventListener('change', handleTypeChange);
+  document.getElementById('input-category').addEventListener('change', handleCategoryChange);
+  
+  // Modali deposito creazione
   document.getElementById('btn-new-deposit').addEventListener('click', () => toggleModal(modalDeposit, true));
   document.getElementById('btn-cancel-deposit').addEventListener('click', () => toggleModal(modalDeposit, false));
   formDeposit.addEventListener('submit', handleDepositSubmit);
   
-  document.getElementById('btn-add-friend').addEventListener('click', () => toggleModal(modalFriend, true));
-  document.getElementById('btn-cancel-friend').addEventListener('click', () => toggleModal(modalFriend, false));
-  formFriend.addEventListener('submit', handleFriendSubmit);
+  // Modal gestione deposito
+  document.getElementById('btn-close-deposit-manage').addEventListener('click', () => toggleModal(modalDepositManage, false));
+  document.getElementById('btn-deposit-add').addEventListener('click', () => openDepositTransaction('add'));
+  document.getElementById('btn-deposit-remove').addEventListener('click', () => openDepositTransaction('remove'));
+  document.getElementById('btn-deposit-pay').addEventListener('click', () => openDepositTransaction('pay'));
   
   // Export/Import
   document.getElementById('btn-export').addEventListener('click', exportData);
@@ -144,9 +153,14 @@ function setupEventListeners() {
   document.getElementById('file-import').addEventListener('change', importData);
   
   // Close modal on backdrop click
-  [modalTransaction, modalDeposit, modalFriend].forEach(modal => {
+  [modalTransaction, modalDeposit, modalDepositManage].forEach(modal => {
     modal.addEventListener('click', (e) => {
-      if (e.target === modal) toggleModal(modal, false);
+      if (e.target === modal) {
+        toggleModal(modal, false);
+        if (modal === modalTransaction) {
+          closeTransactionModal();
+        }
+      }
     });
   });
   
@@ -157,6 +171,49 @@ function setupEventListeners() {
     currentFilter = e.target.dataset.filter;
     renderTransactions();
   });
+}
+
+// ============================================
+// DEPOSIT MANAGEMENT (NUOVO!)
+// ============================================
+let currentDepositId = null;
+
+function openDepositManage(depositId) {
+  currentDepositId = depositId;
+  const deposit = deposits.find(d => d.id === depositId);
+  if (!deposit) return;
+  
+  const { depositBalances } = calculateBalances();
+  const balance = depositBalances[depositId] || 0;
+  
+  document.getElementById('deposit-manage-name').textContent = deposit.name;
+  document.getElementById('deposit-manage-balance').textContent = fmt.format(balance);
+  
+  toggleModal(modalDepositManage, true);
+}
+
+function openDepositTransaction(action) {
+  toggleModal(modalDepositManage, false);
+  
+  if (action === 'add') {
+    // Aggiungi soldi al deposito (da portafoglio a deposito)
+    openTransactionModal('deposit', null, null);
+    setTimeout(() => {
+      document.getElementById('input-deposit').value = currentDepositId;
+    }, 100);
+  } else if (action === 'remove') {
+    // Preleva soldi dal deposito (da deposito a portafoglio)
+    openTransactionModal('withdrawal', null, null);
+    setTimeout(() => {
+      document.getElementById('input-deposit').value = currentDepositId;
+    }, 100);
+  } else if (action === 'pay') {
+    // Paga direttamente con il deposito (spesa dal deposito)
+    openTransactionModal('expense-from-deposit', null, null);
+    setTimeout(() => {
+      document.getElementById('input-deposit').value = currentDepositId;
+    }, 100);
+  }
 }
 
 // ============================================
@@ -181,10 +238,15 @@ function openTransactionModal(type = 'expense', transaction = null, presetMethod
     document.getElementById('input-tags').value = transaction.tags?.join(', ') || '';
     document.getElementById('input-beer-count').value = transaction.beerCount || 1;
     document.getElementById('input-deposit').value = transaction.depositId || '';
-    document.getElementById('input-friend').value = transaction.friendId || '';
   } else {
-    title.textContent = type === 'expense' ? 'Nuova spesa' : 
-                       type === 'income' ? 'Nuova entrata' : 'Nuovo deposito';
+    const titles = {
+      'expense': 'Nuova spesa',
+      'income': 'Nuova entrata',
+      'deposit': 'Aggiungi al deposito',
+      'withdrawal': 'Preleva dal deposito',
+      'expense-from-deposit': 'Paga con deposito'
+    };
+    title.textContent = titles[type] || 'Nuova transazione';
     deleteBtn.style.display = 'none';
     formTransaction.reset();
     document.getElementById('input-type').value = type;
@@ -195,25 +257,13 @@ function openTransactionModal(type = 'expense', transaction = null, presetMethod
   }
   
   handleTypeChange();
-  modalTransaction.classList.add('show');
-}
-
-function ensureModalClosed(modal) {
-  modal.classList.remove('show');
-  modal.style.display = 'none';
+  toggleModal(modalTransaction, true);
 }
 
 function closeTransactionModal() {
-  ensureModalClosed(modalTransaction);
+  toggleModal(modalTransaction, false);
   editingId = null;
 }
-
-// Ensure modals are hidden on page load
-window.addEventListener('load', () => {
-  ensureModalClosed(modalTransaction);
-  ensureModalClosed(modalDeposit);
-  ensureModalClosed(modalFriend);
-});
 
 function handleTypeChange() {
   const type = document.getElementById('input-type').value;
@@ -221,24 +271,17 @@ function handleTypeChange() {
   const methodGroup = document.getElementById('group-method');
   const depositGroup = document.getElementById('group-deposit');
   const beerGroup = document.getElementById('group-beer');
-  const friendGroup = document.getElementById('group-friend');
   
   // Reset visibility
   categoryGroup.style.display = 'none';
   methodGroup.style.display = 'none';
   depositGroup.style.display = 'none';
   beerGroup.style.display = 'none';
-  friendGroup.style.display = 'none';
   
   if (type === 'expense') {
     categoryGroup.style.display = 'block';
     methodGroup.style.display = 'block';
-    const isBeer = document.getElementById('input-category').value === 'Birra';
-    if (isBeer) {
-      beerGroup.style.display = 'block';
-      friendGroup.style.display = 'block';
-      updateFriendSelect();
-    }
+    handleCategoryChange();
   } else if (type === 'income') {
     categoryGroup.style.display = 'block';
     methodGroup.style.display = 'block';
@@ -250,6 +293,22 @@ function handleTypeChange() {
     methodGroup.style.display = 'block';
     depositGroup.style.display = 'block';
     updateDepositSelect();
+  } else if (type === 'expense-from-deposit') {
+    categoryGroup.style.display = 'block';
+    depositGroup.style.display = 'block';
+    updateDepositSelect();
+    handleCategoryChange();
+  }
+}
+
+function handleCategoryChange() {
+  const category = document.getElementById('input-category').value;
+  const beerGroup = document.getElementById('group-beer');
+  
+  if (category === 'Birra') {
+    beerGroup.style.display = 'block';
+  } else {
+    beerGroup.style.display = 'none';
   }
 }
 
@@ -257,13 +316,6 @@ function updateDepositSelect() {
   const select = document.getElementById('input-deposit');
   select.innerHTML = deposits.map(d => 
     `<option value="${d.id}">${d.name}</option>`
-  ).join('');
-}
-
-function updateFriendSelect() {
-  const select = document.getElementById('input-friend');
-  select.innerHTML = '<option value="">Io</option>' + friends.map(f => 
-    `<option value="${f.id}">${f.emoji ? f.emoji + ' ' : ''}${f.name}</option>`
   ).join('');
 }
 
@@ -284,13 +336,12 @@ function handleTransactionSubmit(e) {
     type,
     amount,
     date,
-    category: ['expense', 'income'].includes(type) ? category : null,
+    category: ['expense', 'income', 'expense-from-deposit'].includes(type) ? category : null,
     method: ['expense', 'income', 'deposit', 'withdrawal'].includes(type) ? method : null,
     note,
     tags,
-    depositId: ['deposit', 'withdrawal'].includes(type) ? document.getElementById('input-deposit').value : null,
-    beerCount: (type === 'expense' && category === 'Birra') ? parseInt(document.getElementById('input-beer-count').value) : 0,
-    friendId: (type === 'expense' && category === 'Birra') ? document.getElementById('input-friend').value || null : null
+    depositId: ['deposit', 'withdrawal', 'expense-from-deposit'].includes(type) ? document.getElementById('input-deposit').value : null,
+    beerCount: ((type === 'expense' || type === 'expense-from-deposit') && category === 'Birra') ? parseInt(document.getElementById('input-beer-count').value) : 0
   };
   
   if (editingId) {
@@ -332,24 +383,6 @@ function handleDepositSubmit(e) {
   render();
 }
 
-function handleFriendSubmit(e) {
-  e.preventDefault();
-  
-  const name = document.getElementById('friend-name').value.trim();
-  const emoji = document.getElementById('friend-emoji').value.trim();
-  
-  friends.push({
-    id: Date.now().toString(),
-    name,
-    emoji
-  });
-  
-  saveFriends();
-  toggleModal(modalFriend, false);
-  formFriend.reset();
-  render();
-}
-
 // ============================================
 // CALCULATIONS
 // ============================================
@@ -369,10 +402,15 @@ function calculateBalances() {
     } else if (t.type === 'expense') {
       balances[t.method] -= t.amount;
     } else if (t.type === 'deposit') {
+      // Sposta soldi da portafoglio a deposito
       balances[t.method] -= t.amount;
       depositBalances[t.depositId] += t.amount;
     } else if (t.type === 'withdrawal') {
+      // Sposta soldi da deposito a portafoglio
       balances[t.method] += t.amount;
+      depositBalances[t.depositId] -= t.amount;
+    } else if (t.type === 'expense-from-deposit') {
+      // Paga direttamente dal deposito
       depositBalances[t.depositId] -= t.amount;
     }
   });
@@ -390,7 +428,7 @@ function calculateBeerStats() {
     const d = new Date(t.date);
     return d.getMonth() === now.getMonth() && 
            d.getFullYear() === now.getFullYear() &&
-           t.type === 'expense' &&
+           (t.type === 'expense' || t.type === 'expense-from-deposit') &&
            t.category === 'Birra';
   });
   
@@ -400,7 +438,7 @@ function calculateBeerStats() {
     const d = new Date(t.date);
     return d.getMonth() === lastMonthDate.getMonth() && 
            d.getFullYear() === lastMonthDate.getFullYear() &&
-           t.type === 'expense' &&
+           (t.type === 'expense' || t.type === 'expense-from-deposit') &&
            t.category === 'Birra';
   });
   
@@ -409,41 +447,6 @@ function calculateBeerStats() {
   const totalSpent = thisMonth.reduce((sum, t) => sum + t.amount, 0);
   
   return { count, lastMonthCount, totalSpent };
-}
-
-function calculateLeaderboard() {
-  const now = new Date();
-  const thisMonth = transactions.filter(t => {
-    const d = new Date(t.date);
-    return d.getMonth() === now.getMonth() && 
-           d.getFullYear() === now.getFullYear() &&
-           t.type === 'expense' &&
-           t.category === 'Birra';
-  });
-  
-  const counts = {};
-  
-  // Mie birre (senza friendId)
-  const myBeers = thisMonth.filter(t => !t.friendId).reduce((sum, t) => sum + (t.beerCount || 0), 0);
-  if (myBeers > 0) {
-    counts['me'] = { name: 'Io', emoji: '👤', count: myBeers };
-  }
-  
-  // Birre degli amici
-  thisMonth.forEach(t => {
-    if (t.friendId) {
-      if (!counts[t.friendId]) {
-        const friend = friends.find(f => f.id === t.friendId);
-        counts[t.friendId] = { name: friend?.name || 'Sconosciuto', emoji: friend?.emoji || '👤', count: 0 };
-      }
-      counts[t.friendId].count += t.beerCount || 0;
-    }
-  });
-  
-  return Object.entries(counts)
-    .map(([id, data]) => ({ id, ...data }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
 }
 
 function calculateBeerChartData() {
@@ -456,7 +459,7 @@ function calculateBeerChartData() {
       const d = new Date(t.date);
       return d.getMonth() === date.getMonth() && 
              d.getFullYear() === date.getFullYear() &&
-             t.type === 'expense' &&
+             (t.type === 'expense' || t.type === 'expense-from-deposit') &&
              t.category === 'Birra';
     });
     
@@ -464,6 +467,49 @@ function calculateBeerChartData() {
     data.push({
       month: date.toLocaleDateString('it-IT', { month: 'short' }),
       count
+    });
+  }
+  
+  return data;
+}
+
+function calculateCategoryData() {
+  const now = new Date();
+  const thisMonth = transactions.filter(t => {
+    const d = new Date(t.date);
+    return d.getMonth() === now.getMonth() && 
+           d.getFullYear() === now.getFullYear() &&
+           (t.type === 'expense' || t.type === 'expense-from-deposit') &&
+           t.category;
+  });
+  
+  const categoryTotals = {};
+  thisMonth.forEach(t => {
+    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+  });
+  
+  return Object.entries(categoryTotals).map(([name, value]) => ({ name, value }));
+}
+
+function calculateIncomeExpenseData() {
+  const now = new Date();
+  const data = [];
+  
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthTrans = transactions.filter(t => {
+      const d = new Date(t.date);
+      return d.getMonth() === date.getMonth() && 
+             d.getFullYear() === date.getFullYear();
+    });
+    
+    const income = monthTrans.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const expense = monthTrans.filter(t => t.type === 'expense' || t.type === 'expense-from-deposit').reduce((sum, t) => sum + t.amount, 0);
+    
+    data.push({
+      month: date.toLocaleDateString('it-IT', { month: 'short' }),
+      income,
+      expense
     });
   }
   
@@ -478,21 +524,18 @@ function calculateStats() {
            d.getFullYear() === now.getFullYear();
   });
   
-  // Total expenses and income
-  const totalExpenses = thisMonth.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const totalExpenses = thisMonth.filter(t => t.type === 'expense' || t.type === 'expense-from-deposit').reduce((sum, t) => sum + t.amount, 0);
   const totalIncome = thisMonth.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   
-  // Top category
   const categoryCount = {};
-  thisMonth.filter(t => t.type === 'expense' && t.category).forEach(t => {
+  thisMonth.filter(t => (t.type === 'expense' || t.type === 'expense-from-deposit') && t.category).forEach(t => {
     categoryCount[t.category] = (categoryCount[t.category] || 0) + 1;
   });
   const topCategory = Object.keys(categoryCount).length > 0 
     ? Object.entries(categoryCount).sort((a, b) => b[1] - a[1])[0][0]
     : '-';
   
-  // Beer spent
-  const beerSpent = thisMonth.filter(t => t.type === 'expense' && t.category === 'Birra')
+  const beerSpent = thisMonth.filter(t => (t.type === 'expense' || t.type === 'expense-from-deposit') && t.category === 'Birra')
     .reduce((sum, t) => sum + t.amount, 0);
   
   return { totalExpenses, totalIncome, topCategory, beerSpent };
@@ -503,8 +546,9 @@ function calculateStats() {
 // ============================================
 function render() {
   renderBeerCounter();
-  renderLeaderboard();
   renderBeerChart();
+  renderCategoryChart();
+  renderIncomeExpenseChart();
   renderBalances();
   renderDeposits();
   renderStats();
@@ -518,7 +562,6 @@ function renderBeerCounter() {
   const lastMonthEl = document.getElementById('beer-last-month');
   const diffEl = document.getElementById('beer-diff');
   
-  // Animate count change
   const oldCount = parseInt(countEl.textContent) || 0;
   if (oldCount !== count) {
     countEl.style.animation = 'none';
@@ -530,7 +573,6 @@ function renderBeerCounter() {
   countEl.textContent = count;
   lastMonthEl.textContent = lastMonthCount;
   
-  // Differenza
   const diff = count - lastMonthCount;
   if (diff > 0) {
     diffEl.textContent = `+${diff} 📈`;
@@ -544,66 +586,192 @@ function renderBeerCounter() {
   }
 }
 
-function renderLeaderboard() {
-  const leaderboard = calculateLeaderboard();
-  const container = document.getElementById('leaderboard-list');
+function renderBeerChart() {
+  const data = calculateBeerChartData();
+  const ctx = document.getElementById('beer-chart').getContext('2d');
   
-  if (leaderboard.length === 0) {
-    container.innerHTML = '<p style="color: var(--muted); font-size: 0.9rem; text-align: center; padding: 20px 0;">Nessuna birra tracciata questo mese</p>';
+  if (beerChart) {
+    beerChart.destroy();
+  }
+  
+  beerChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.month),
+      datasets: [{
+        label: 'Birre',
+        data: data.map(d => d.count),
+        backgroundColor: '#facc15',
+        borderRadius: 8,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0f172a',
+          titleColor: '#e5e7eb',
+          bodyColor: '#e5e7eb',
+          padding: 12,
+          borderColor: '#1e293b',
+          borderWidth: 1,
+          displayColors: false,
+          callbacks: {
+            label: (context) => `${context.parsed.y} birre`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { 
+            color: '#94a3b8',
+            stepSize: 1
+          },
+          grid: { color: '#1e293b' }
+        },
+        x: {
+          ticks: { color: '#94a3b8' },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+function renderCategoryChart() {
+  const data = calculateCategoryData();
+  const ctx = document.getElementById('category-chart').getContext('2d');
+  
+  if (categoryChart) {
+    categoryChart.destroy();
+  }
+  
+  if (data.length === 0) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText('Nessuna spesa questo mese', ctx.canvas.width / 2, ctx.canvas.height / 2);
     return;
   }
   
-  container.innerHTML = leaderboard.map((person, i) => {
-    const rankClass = i === 0 ? 'first' : i === 1 ? 'second' : i === 2 ? 'third' : '';
-    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}°`;
-    
-    return `
-      <div class="leaderboard-item">
-        <div class="leaderboard-rank ${rankClass}">${medal}</div>
-        <div class="leaderboard-info">
-          <div class="leaderboard-name">${person.emoji} ${person.name}</div>
-        </div>
-        <div class="leaderboard-beers">
-          🍺 ${person.count}
-        </div>
-      </div>
-    `;
-  }).join('');
+  const colors = ['#ef4444', '#f59e0b', '#facc15', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'];
+  
+  categoryChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: data.map(d => d.name),
+      datasets: [{
+        data: data.map(d => d.value),
+        backgroundColor: colors.slice(0, data.length),
+        borderColor: '#0f172a',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#e5e7eb',
+            padding: 12,
+            font: { size: 12 }
+          }
+        },
+        tooltip: {
+          backgroundColor: '#0f172a',
+          titleColor: '#e5e7eb',
+          bodyColor: '#e5e7eb',
+          padding: 12,
+          borderColor: '#1e293b',
+          borderWidth: 1,
+          callbacks: {
+            label: (context) => `${context.label}: ${fmt.format(context.parsed)}`
+          }
+        }
+      }
+    }
+  });
 }
 
-function renderBeerChart() {
-  const data = calculateBeerChartData();
-  const canvas = document.getElementById('beer-chart');
-  const ctx = canvas.getContext('2d');
+function renderIncomeExpenseChart() {
+  const data = calculateIncomeExpenseData();
+  const ctx = document.getElementById('income-expense-chart').getContext('2d');
   
-  const width = canvas.width;
-  const height = canvas.height;
+  if (incomeExpenseChart) {
+    incomeExpenseChart.destroy();
+  }
   
-  ctx.clearRect(0, 0, width, height);
-  
-  const maxCount = Math.max(...data.map(d => d.count), 1);
-  const barWidth = (width - 60) / data.length;
-  const maxBarHeight = height - 60;
-  
-  data.forEach((item, i) => {
-    const barHeight = (item.count / maxCount) * maxBarHeight;
-    const x = 30 + i * barWidth;
-    const y = height - 30 - barHeight;
-    
-    // Bar
-    ctx.fillStyle = '#facc15';
-    ctx.fillRect(x + 5, y, barWidth - 10, barHeight);
-    
-    // Count
-    ctx.fillStyle = '#e5e7eb';
-    ctx.font = '12px Inter';
-    ctx.textAlign = 'center';
-    ctx.fillText(item.count, x + barWidth / 2, y - 5);
-    
-    // Month
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '11px Inter';
-    ctx.fillText(item.month, x + barWidth / 2, height - 12);
+  incomeExpenseChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map(d => d.month),
+      datasets: [
+        {
+          label: 'Entrate',
+          data: data.map(d => d.income),
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderWidth: 3,
+          tension: 0.4,
+          fill: true
+        },
+        {
+          label: 'Uscite',
+          data: data.map(d => d.expense),
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          borderWidth: 3,
+          tension: 0.4,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#e5e7eb',
+            padding: 12,
+            font: { size: 12 }
+          }
+        },
+        tooltip: {
+          backgroundColor: '#0f172a',
+          titleColor: '#e5e7eb',
+          bodyColor: '#e5e7eb',
+          padding: 12,
+          borderColor: '#1e293b',
+          borderWidth: 1,
+          callbacks: {
+            label: (context) => `${context.dataset.label}: ${fmt.format(context.parsed.y)}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { 
+            color: '#94a3b8',
+            callback: (value) => fmt.format(value)
+          },
+          grid: { color: '#1e293b' }
+        },
+        x: {
+          ticks: { color: '#94a3b8' },
+          grid: { display: false }
+        }
+      }
+    }
   });
 }
 
@@ -626,17 +794,16 @@ function renderDeposits() {
   }
   
   container.innerHTML = deposits.map(d => `
-    <div class="deposit-item" style="border-color: ${d.color}">
+    <div class="deposit-item" style="border-color: ${d.color}" data-deposit-id="${d.id}">
       <span class="deposit-name">${d.name}</span>
       <span class="deposit-amount">${fmt.format(depositBalances[d.id] || 0)}</span>
     </div>
   `).join('');
   
-  // Add click handlers
-  container.querySelectorAll('.deposit-item').forEach((el, i) => {
+  container.querySelectorAll('.deposit-item').forEach(el => {
     el.addEventListener('click', () => {
-      openTransactionModal('deposit');
-      document.getElementById('input-deposit').value = deposits[i].id;
+      const depositId = el.dataset.depositId;
+      openDepositManage(depositId);
     });
   });
 }
@@ -666,22 +833,38 @@ function renderTransactions() {
   
   container.innerHTML = filtered.map(t => {
     const isPositive = t.type === 'income' || t.type === 'withdrawal';
-    const icon = t.type === 'expense' ? '💸' : 
-                 t.type === 'income' ? '💰' :
-                 t.type === 'deposit' ? '🏦' : '🏧';
+    let icon = '💸';
+    let typeLabel = '';
+    
+    if (t.type === 'expense') {
+      icon = '💸';
+      typeLabel = t.category;
+    } else if (t.type === 'income') {
+      icon = '💰';
+      typeLabel = t.category || 'Entrata';
+    } else if (t.type === 'deposit') {
+      icon = '🏦';
+      const deposit = deposits.find(d => d.id === t.depositId);
+      typeLabel = `➡️ ${deposit?.name || 'Deposito'}`;
+    } else if (t.type === 'withdrawal') {
+      icon = '🏧';
+      const deposit = deposits.find(d => d.id === t.depositId);
+      typeLabel = `⬅️ ${deposit?.name || 'Deposito'}`;
+    } else if (t.type === 'expense-from-deposit') {
+      icon = '🏦💸';
+      const deposit = deposits.find(d => d.id === t.depositId);
+      typeLabel = `${t.category} (da ${deposit?.name})`;
+    }
     
     const amountClass = isPositive ? 'positive' : 'negative';
     const amountSign = isPositive ? '+' : '-';
-    
-    const friendName = t.friendId ? friends.find(f => f.id === t.friendId)?.name || 'Amico' : null;
     
     return `
       <div class="transaction-item ${t.type}" data-id="${t.id}">
         <div class="transaction-info">
           <div class="transaction-title">
-            ${icon} ${t.category || (t.type === 'deposit' ? 'Deposito' : 'Prelievo')}
+            ${icon} ${typeLabel}
             ${t.beerCount > 0 ? `🍺 x${t.beerCount}` : ''}
-            ${friendName ? `(${friendName})` : ''}
           </div>
           <div class="transaction-meta">
             ${new Date(t.date).toLocaleDateString('it-IT')}
@@ -701,7 +884,6 @@ function renderTransactions() {
     `;
   }).join('');
   
-  // Add click handlers
   container.querySelectorAll('.transaction-item').forEach(el => {
     const id = parseInt(el.dataset.id);
     const transaction = transactions.find(t => t.id === id);
@@ -719,7 +901,6 @@ function exportData() {
   const data = {
     transactions,
     deposits,
-    friends,
     exportDate: new Date().toISOString()
   };
   
@@ -744,10 +925,8 @@ function importData(e) {
       if (confirm('Importare i dati? Questo sovrascriverà i dati attuali.')) {
         transactions = data.transactions || [];
         deposits = data.deposits || [];
-        friends = data.friends || [];
         saveTransactions();
         saveDeposits();
-        saveFriends();
         render();
         alert('Dati importati con successo!');
       }
