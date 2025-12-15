@@ -1,10 +1,12 @@
 // STORAGE KEYS
 const STORAGE_KEY = 'miraConti_transactions_v2';
 const DEPOSITS_KEY = 'miraConti_deposits_v2';
+const FRIENDS_KEY = 'miraConti_friends_v2';
 
 // DATA
 let transactions = [];
 let deposits = [];
+let friends = [];
 let currentFilter = 'all';
 let editingId = null;
 
@@ -13,8 +15,10 @@ const fab = document.getElementById('fab');
 const quickMenu = document.getElementById('quick-menu');
 const modalTransaction = document.getElementById('modal-transaction');
 const modalDeposit = document.getElementById('modal-deposit');
+const modalFriend = document.getElementById('modal-friend');
 const formTransaction = document.getElementById('form-transaction');
 const formDeposit = document.getElementById('form-deposit');
+const formFriend = document.getElementById('form-friend');
 
 // FORMATTER
 const fmt = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
@@ -31,6 +35,7 @@ function init() {
 function loadData() {
   transactions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
   deposits = JSON.parse(localStorage.getItem(DEPOSITS_KEY) || '[]');
+  friends = JSON.parse(localStorage.getItem(FRIENDS_KEY) || '[]');
   
   // Depositi di default
   if (deposits.length === 0) {
@@ -49,6 +54,10 @@ function saveTransactions() {
 
 function saveDeposits() {
   localStorage.setItem(DEPOSITS_KEY, JSON.stringify(deposits));
+}
+
+function saveFriends() {
+  localStorage.setItem(FRIENDS_KEY, JSON.stringify(friends));
 }
 
 // ============================================
@@ -101,6 +110,16 @@ function setupEventListeners() {
     }
   });
   
+  // Wallet card buttons
+  document.querySelectorAll('.card-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const action = btn.dataset.action;
+      const method = btn.dataset.method;
+      openTransactionModal(action, null, method);
+    });
+  });
+  
   // Modal transaction
   document.getElementById('btn-cancel').addEventListener('click', closeTransactionModal);
   formTransaction.addEventListener('submit', handleTransactionSubmit);
@@ -112,7 +131,11 @@ function setupEventListeners() {
   // Category change (per birre)
   document.getElementById('input-category').addEventListener('change', (e) => {
     const beerGroup = document.getElementById('group-beer');
-    beerGroup.style.display = e.target.value === 'Birra' ? 'block' : 'none';
+    const friendGroup = document.getElementById('group-friend');
+    const isBeer = e.target.value === 'Birra';
+    beerGroup.style.display = isBeer ? 'block' : 'none';
+    friendGroup.style.display = isBeer ? 'block' : 'none';
+    if (isBeer) updateFriendSelect();
   });
   
   // Filters
@@ -136,6 +159,17 @@ function setupEventListeners() {
   
   formDeposit.addEventListener('submit', handleDepositSubmit);
   
+  // New friend
+  document.getElementById('btn-add-friend').addEventListener('click', () => {
+    modalFriend.classList.add('show');
+  });
+  
+  document.getElementById('btn-cancel-friend').addEventListener('click', () => {
+    modalFriend.classList.remove('show');
+  });
+  
+  formFriend.addEventListener('submit', handleFriendSubmit);
+  
   // Export/Import
   document.getElementById('btn-export').addEventListener('click', exportData);
   document.getElementById('btn-import').addEventListener('click', () => {
@@ -150,12 +184,15 @@ function setupEventListeners() {
   modalDeposit.addEventListener('click', (e) => {
     if (e.target === modalDeposit) modalDeposit.classList.remove('show');
   });
+  modalFriend.addEventListener('click', (e) => {
+    if (e.target === modalFriend) modalFriend.classList.remove('show');
+  });
 }
 
 // ============================================
 // MODAL MANAGEMENT
 // ============================================
-function openTransactionModal(type = 'expense', transaction = null) {
+function openTransactionModal(type = 'expense', transaction = null, presetMethod = null) {
   editingId = transaction?.id || null;
   
   const title = document.getElementById('modal-title');
@@ -174,6 +211,7 @@ function openTransactionModal(type = 'expense', transaction = null) {
     document.getElementById('input-tags').value = transaction.tags?.join(', ') || '';
     document.getElementById('input-beer-count').value = transaction.beerCount || 1;
     document.getElementById('input-deposit').value = transaction.depositId || '';
+    document.getElementById('input-friend').value = transaction.friendId || '';
   } else {
     title.textContent = type === 'expense' ? 'Nuova spesa' : 
                        type === 'income' ? 'Nuova entrata' : 'Nuovo deposito';
@@ -181,6 +219,9 @@ function openTransactionModal(type = 'expense', transaction = null) {
     formTransaction.reset();
     document.getElementById('input-type').value = type;
     document.getElementById('input-date').valueAsDate = new Date();
+    if (presetMethod) {
+      document.getElementById('input-method').value = presetMethod;
+    }
   }
   
   handleTypeChange();
@@ -198,18 +239,23 @@ function handleTypeChange() {
   const methodGroup = document.getElementById('group-method');
   const depositGroup = document.getElementById('group-deposit');
   const beerGroup = document.getElementById('group-beer');
+  const friendGroup = document.getElementById('group-friend');
   
   // Reset visibility
   categoryGroup.style.display = 'none';
   methodGroup.style.display = 'none';
   depositGroup.style.display = 'none';
   beerGroup.style.display = 'none';
+  friendGroup.style.display = 'none';
   
   if (type === 'expense') {
     categoryGroup.style.display = 'block';
     methodGroup.style.display = 'block';
-    if (document.getElementById('input-category').value === 'Birra') {
+    const isBeer = document.getElementById('input-category').value === 'Birra';
+    if (isBeer) {
       beerGroup.style.display = 'block';
+      friendGroup.style.display = 'block';
+      updateFriendSelect();
     }
   } else if (type === 'income') {
     categoryGroup.style.display = 'block';
@@ -229,6 +275,13 @@ function updateDepositSelect() {
   const select = document.getElementById('input-deposit');
   select.innerHTML = deposits.map(d => 
     `<option value="${d.id}">${d.name}</option>`
+  ).join('');
+}
+
+function updateFriendSelect() {
+  const select = document.getElementById('input-friend');
+  select.innerHTML = '<option value="">Io</option>' + friends.map(f => 
+    `<option value="${f.id}">${f.emoji ? f.emoji + ' ' : ''}${f.name}</option>`
   ).join('');
 }
 
@@ -254,7 +307,8 @@ function handleTransactionSubmit(e) {
     note,
     tags,
     depositId: ['deposit', 'withdrawal'].includes(type) ? document.getElementById('input-deposit').value : null,
-    beerCount: (type === 'expense' && category === 'Birra') ? parseInt(document.getElementById('input-beer-count').value) : 0
+    beerCount: (type === 'expense' && category === 'Birra') ? parseInt(document.getElementById('input-beer-count').value) : 0,
+    friendId: (type === 'expense' && category === 'Birra') ? document.getElementById('input-friend').value || null : null
   };
   
   if (editingId) {
@@ -296,6 +350,24 @@ function handleDepositSubmit(e) {
   render();
 }
 
+function handleFriendSubmit(e) {
+  e.preventDefault();
+  
+  const name = document.getElementById('friend-name').value.trim();
+  const emoji = document.getElementById('friend-emoji').value.trim();
+  
+  friends.push({
+    id: Date.now().toString(),
+    name,
+    emoji
+  });
+  
+  saveFriends();
+  modalFriend.classList.remove('show');
+  formFriend.reset();
+  render();
+}
+
 // ============================================
 // CALCULATIONS
 // ============================================
@@ -330,6 +402,8 @@ function calculateBalances() {
 
 function calculateBeerStats() {
   const now = new Date();
+  
+  // This month
   const thisMonth = transactions.filter(t => {
     const d = new Date(t.date);
     return d.getMonth() === now.getMonth() && 
@@ -338,11 +412,80 @@ function calculateBeerStats() {
            t.category === 'Birra';
   });
   
-  const count = thisMonth.reduce((sum, t) => sum + (t.beerCount || 0), 0);
-  const totalSpent = thisMonth.reduce((sum, t) => sum + t.amount, 0);
-  const avgPrice = count > 0 ? totalSpent / count : 0;
+  // Last month
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonth = transactions.filter(t => {
+    const d = new Date(t.date);
+    return d.getMonth() === lastMonthDate.getMonth() && 
+           d.getFullYear() === lastMonthDate.getFullYear() &&
+           t.type === 'expense' &&
+           t.category === 'Birra';
+  });
   
-  return { count, totalSpent, avgPrice };
+  const count = thisMonth.reduce((sum, t) => sum + (t.beerCount || 0), 0);
+  const lastMonthCount = lastMonth.reduce((sum, t) => sum + (t.beerCount || 0), 0);
+  const totalSpent = thisMonth.reduce((sum, t) => sum + t.amount, 0);
+  
+  return { count, lastMonthCount, totalSpent };
+}
+
+function calculateLeaderboard() {
+  const now = new Date();
+  const thisMonth = transactions.filter(t => {
+    const d = new Date(t.date);
+    return d.getMonth() === now.getMonth() && 
+           d.getFullYear() === now.getFullYear() &&
+           t.type === 'expense' &&
+           t.category === 'Birra';
+  });
+  
+  const counts = {};
+  
+  // Mie birre (senza friendId)
+  const myBeers = thisMonth.filter(t => !t.friendId).reduce((sum, t) => sum + (t.beerCount || 0), 0);
+  if (myBeers > 0) {
+    counts['me'] = { name: 'Io', emoji: '👤', count: myBeers };
+  }
+  
+  // Birre degli amici
+  thisMonth.forEach(t => {
+    if (t.friendId) {
+      if (!counts[t.friendId]) {
+        const friend = friends.find(f => f.id === t.friendId);
+        counts[t.friendId] = { name: friend?.name || 'Sconosciuto', emoji: friend?.emoji || '👤', count: 0 };
+      }
+      counts[t.friendId].count += t.beerCount || 0;
+    }
+  });
+  
+  return Object.entries(counts)
+    .map(([id, data]) => ({ id, ...data }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+}
+
+function calculateBeerChartData() {
+  const now = new Date();
+  const data = [];
+  
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthBeers = transactions.filter(t => {
+      const d = new Date(t.date);
+      return d.getMonth() === date.getMonth() && 
+             d.getFullYear() === date.getFullYear() &&
+             t.type === 'expense' &&
+             t.category === 'Birra';
+    });
+    
+    const count = monthBeers.reduce((sum, t) => sum + (t.beerCount || 0), 0);
+    data.push({
+      month: date.toLocaleDateString('it-IT', { month: 'short' }),
+      count
+    });
+  }
+  
+  return data;
 }
 
 function calculateStats() {
@@ -353,6 +496,10 @@ function calculateStats() {
            d.getFullYear() === now.getFullYear();
   });
   
+  // Total expenses and income
+  const totalExpenses = thisMonth.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const totalIncome = thisMonth.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  
   // Top category
   const categoryCount = {};
   thisMonth.filter(t => t.type === 'expense' && t.category).forEach(t => {
@@ -362,22 +509,11 @@ function calculateStats() {
     ? Object.entries(categoryCount).sort((a, b) => b[1] - a[1])[0][0]
     : '-';
   
-  // Top method
-  const methodCount = {};
-  thisMonth.filter(t => t.method).forEach(t => {
-    methodCount[t.method] = (methodCount[t.method] || 0) + 1;
-  });
-  const topMethod = Object.keys(methodCount).length > 0
-    ? Object.entries(methodCount).sort((a, b) => b[1] - a[1])[0][0]
-    : '-';
+  // Beer spent
+  const beerSpent = thisMonth.filter(t => t.type === 'expense' && t.category === 'Birra')
+    .reduce((sum, t) => sum + t.amount, 0);
   
-  // Average expense
-  const expenses = thisMonth.filter(t => t.type === 'expense');
-  const avgExpense = expenses.length > 0
-    ? expenses.reduce((sum, t) => sum + t.amount, 0) / expenses.length
-    : 0;
-  
-  return { topCategory, topMethod, avgExpense };
+  return { totalExpenses, totalIncome, topCategory, beerSpent };
 }
 
 // ============================================
@@ -385,6 +521,8 @@ function calculateStats() {
 // ============================================
 function render() {
   renderBeerCounter();
+  renderLeaderboard();
+  renderBeerChart();
   renderBalances();
   renderDeposits();
   renderStats();
@@ -392,11 +530,11 @@ function render() {
 }
 
 function renderBeerCounter() {
-  const { count, totalSpent, avgPrice } = calculateBeerStats();
+  const { count, lastMonthCount, totalSpent } = calculateBeerStats();
   
   const countEl = document.getElementById('beer-count');
-  const spentEl = document.getElementById('beer-total-spent');
-  const avgEl = document.getElementById('beer-avg-price');
+  const lastMonthEl = document.getElementById('beer-last-month');
+  const diffEl = document.getElementById('beer-diff');
   
   // Animate count change
   const oldCount = parseInt(countEl.textContent) || 0;
@@ -408,8 +546,83 @@ function renderBeerCounter() {
   }
   
   countEl.textContent = count;
-  spentEl.textContent = fmt.format(totalSpent);
-  avgEl.textContent = fmt.format(avgPrice);
+  lastMonthEl.textContent = lastMonthCount;
+  
+  // Differenza
+  const diff = count - lastMonthCount;
+  if (diff > 0) {
+    diffEl.textContent = `+${diff} 📈`;
+    diffEl.className = 'comparison-diff up';
+  } else if (diff < 0) {
+    diffEl.textContent = `${diff} 📉`;
+    diffEl.className = 'comparison-diff down';
+  } else {
+    diffEl.textContent = '=';
+    diffEl.className = 'comparison-diff same';
+  }
+}
+
+function renderLeaderboard() {
+  const leaderboard = calculateLeaderboard();
+  const container = document.getElementById('leaderboard-list');
+  
+  if (leaderboard.length === 0) {
+    container.innerHTML = '<p style="color: var(--muted); font-size: 0.9rem; text-align: center; padding: 20px 0;">Nessuna birra tracciata questo mese</p>';
+    return;
+  }
+  
+  container.innerHTML = leaderboard.map((person, i) => {
+    const rankClass = i === 0 ? 'first' : i === 1 ? 'second' : i === 2 ? 'third' : '';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}°`;
+    
+    return `
+      <div class="leaderboard-item">
+        <div class="leaderboard-rank ${rankClass}">${medal}</div>
+        <div class="leaderboard-info">
+          <div class="leaderboard-name">${person.emoji} ${person.name}</div>
+        </div>
+        <div class="leaderboard-beers">
+          🍺 ${person.count}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderBeerChart() {
+  const data = calculateBeerChartData();
+  const canvas = document.getElementById('beer-chart');
+  const ctx = canvas.getContext('2d');
+  
+  const width = canvas.width;
+  const height = canvas.height;
+  
+  ctx.clearRect(0, 0, width, height);
+  
+  const maxCount = Math.max(...data.map(d => d.count), 1);
+  const barWidth = (width - 60) / data.length;
+  const maxBarHeight = height - 60;
+  
+  data.forEach((item, i) => {
+    const barHeight = (item.count / maxCount) * maxBarHeight;
+    const x = 30 + i * barWidth;
+    const y = height - 30 - barHeight;
+    
+    // Bar
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(x + 5, y, barWidth - 10, barHeight);
+    
+    // Count
+    ctx.fillStyle = '#e5e7eb';
+    ctx.font = '12px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText(item.count, x + barWidth / 2, y - 5);
+    
+    // Month
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px Inter';
+    ctx.fillText(item.month, x + barWidth / 2, height - 12);
+  });
 }
 
 function renderBalances() {
@@ -447,11 +660,12 @@ function renderDeposits() {
 }
 
 function renderStats() {
-  const { topCategory, topMethod, avgExpense } = calculateStats();
+  const { totalExpenses, totalIncome, topCategory, beerSpent } = calculateStats();
   
+  document.getElementById('stat-total-expenses').textContent = fmt.format(totalExpenses);
+  document.getElementById('stat-total-income').textContent = fmt.format(totalIncome);
   document.getElementById('stat-top-category').textContent = topCategory;
-  document.getElementById('stat-top-method').textContent = topMethod;
-  document.getElementById('stat-avg-expense').textContent = fmt.format(avgExpense);
+  document.getElementById('stat-beer-spent').textContent = fmt.format(beerSpent);
 }
 
 function renderTransactions() {
@@ -477,12 +691,15 @@ function renderTransactions() {
     const amountClass = isPositive ? 'positive' : 'negative';
     const amountSign = isPositive ? '+' : '-';
     
+    const friendName = t.friendId ? friends.find(f => f.id === t.friendId)?.name || 'Amico' : null;
+    
     return `
       <div class="transaction-item ${t.type}" data-id="${t.id}">
         <div class="transaction-info">
           <div class="transaction-title">
             ${icon} ${t.category || (t.type === 'deposit' ? 'Deposito' : 'Prelievo')}
             ${t.beerCount > 0 ? `🍺 x${t.beerCount}` : ''}
+            ${friendName ? `(${friendName})` : ''}
           </div>
           <div class="transaction-meta">
             ${new Date(t.date).toLocaleDateString('it-IT')}
@@ -520,6 +737,7 @@ function exportData() {
   const data = {
     transactions,
     deposits,
+    friends,
     exportDate: new Date().toISOString()
   };
   
@@ -544,8 +762,10 @@ function importData(e) {
       if (confirm('Importare i dati? Questo sovrascriverà i dati attuali.')) {
         transactions = data.transactions || [];
         deposits = data.deposits || [];
+        friends = data.friends || [];
         saveTransactions();
         saveDeposits();
+        saveFriends();
         render();
         alert('Dati importati con successo!');
       }

@@ -134,102 +134,233 @@ body {
   100% { transform: scale(1); opacity: 1; }
 }
 
-.beer-secondary {
+.beer-comparison {
   display: flex;
-  gap: 16px;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.9rem;
 }
 
-.beer-stat {
-  display: flex;
-  flex-direction: column;
+.comparison-label {
+  color: #92400e;
+  font-weight: 600;
 }
 
-.stat-value {
-  font-size: 1.2rem;
+.comparison-value {
   font-weight: 700;
   color: #1f2937;
 }
 
-.stat-label {
-  font-size: 0.7rem;
-  color: #92400e;
-  text-transform: uppercase;
-  font-weight: 600;
+.comparison-diff {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
-/* SALDO TOTALE */
-.balance-card {
-  background: linear-gradient(135deg, #7c3aed, #6366f1);
+.comparison-diff.up {
+  background: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+}
+
+.comparison-diff.down {
+  background: rgba(16, 185, 129, 0.2);
+  color: #059669;
+}
+
+.comparison-diff.same {
+  background: rgba(148, 163, 184, 0.2);
+  color: #64748b;
+}
+
+/* CLASSIFICA AMICI */
+.leaderboard-section {
+  background: var(--surface);
+  padding: 16px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+
+.leaderboard-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  border-left: 4px solid var(--beer);
+}
+
+.leaderboard-item:last-child {
+  margin-bottom: 0;
+}
+
+.leaderboard-rank {
+  font-size: 1.5rem;
+  font-weight: 800;
+  width: 40px;
+  text-align: center;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.leaderboard-rank.first { color: #fbbf24; }
+.leaderboard-rank.second { color: #94a3b8; }
+.leaderboard-rank.third { color: #cd7f32; }
+
+.leaderboard-info {
+  flex: 1;
+}
+
+.leaderboard-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.leaderboard-beers {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--beer);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* GRAFICO BIRRE */
+.chart-section {
+  background: var(--surface);
+  padding: 16px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+
+#beer-chart {
+  width: 100%;
+  margin-top: 12px;
+}
+
+/* PORTAFOGLIO VISUALE */
+.wallet-section {
+  background: var(--surface);
   padding: 20px;
   border-radius: var(--radius);
   margin-bottom: 16px;
-  box-shadow: 0 8px 24px rgba(139, 92, 246, .3);
 }
 
-.balance-label {
-  font-size: 0.85rem;
-  opacity: 0.9;
-  margin-bottom: 6px;
-}
-
-.balance-amount {
-  font-size: 2.2rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-/* METODI PAGAMENTO */
-.methods-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.method-card {
-  background: var(--surface);
-  padding: 16px 10px;
-  border-radius: 12px;
+.wallet-header {
+  margin-bottom: 20px;
   text-align: center;
+}
+
+.wallet-header h3 {
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.total-money {
+  font-size: 2.5rem;
+  font-weight: 800;
+  font-family: 'Space Grotesk', sans-serif;
+  background: linear-gradient(135deg, #10b981, #059669);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.wallet-cards {
+  display: grid;
+  gap: 12px;
+}
+
+.wallet-card {
+  background: var(--bg);
+  padding: 16px;
+  border-radius: 16px;
+  border: 2px solid;
+  transition: all 0.3s;
+}
+
+.wallet-card.contanti {
+  border-color: var(--contanti);
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.05), transparent);
+}
+
+.wallet-card.satispay {
+  border-color: var(--satispay);
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.05), transparent);
+}
+
+.wallet-card.hype {
+  border-color: var(--hype);
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.05), transparent);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.card-icon {
+  font-size: 1.5rem;
+}
+
+.card-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+
+.card-balance {
+  font-size: 2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 12px;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.card-btn {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s;
-  border: 2px solid transparent;
+  background: var(--surface);
+  color: var(--text);
 }
 
-.method-card:active {
+.card-btn:active {
   transform: scale(0.95);
 }
 
-.method-card.contanti {
-  border-color: var(--contanti);
+.wallet-card.contanti .card-btn:first-child {
+  background: rgba(45, 212, 191, 0.15);
+  color: var(--contanti);
 }
 
-.method-card.satispay {
-  border-color: var(--satispay);
+.wallet-card.satispay .card-btn:first-child {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--satispay);
 }
 
-.method-card.hype {
-  border-color: var(--hype);
-}
-
-.method-icon {
-  font-size: 1.8rem;
-  margin-bottom: 6px;
-}
-
-.method-name {
-  font-size: 0.7rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.method-amount {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-top: 6px;
-  font-variant-numeric: tabular-nums;
+.wallet-card.hype .card-btn:first-child {
+  background: rgba(96, 165, 250, 0.15);
+  color: var(--hype);
 }
 
 /* DEPOSITI */

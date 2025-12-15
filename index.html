@@ -27,41 +27,72 @@
           <span class="beer-label">Birre questo mese</span>
           <span class="beer-count" id="beer-count">0</span>
         </div>
-        <div class="beer-secondary">
-          <div class="beer-stat">
-            <span class="stat-value" id="beer-total-spent">€0</span>
-            <span class="stat-label">spesi</span>
-          </div>
-          <div class="beer-stat">
-            <span class="stat-value" id="beer-avg-price">€0</span>
-            <span class="stat-label">media</span>
-          </div>
+        <div class="beer-comparison">
+          <span class="comparison-label">Mese scorso:</span>
+          <span class="comparison-value" id="beer-last-month">0</span>
+          <span class="comparison-diff" id="beer-diff"></span>
         </div>
       </div>
     </section>
 
-    <!-- SALDO TOTALE -->
-    <section class="balance-card">
-      <div class="balance-label">💰 Saldo disponibile</div>
-      <div class="balance-amount" id="total-balance">€0,00</div>
+    <!-- CLASSIFICA AMICI -->
+    <section class="leaderboard-section">
+      <div class="section-title">
+        🏆 Classifica Birre
+        <button class="btn-icon" id="btn-add-friend">+</button>
+      </div>
+      <div id="leaderboard-list"></div>
     </section>
 
-    <!-- METODI PAGAMENTO -->
-    <section class="methods-grid">
-      <div class="method-card contanti" data-method="contanti">
-        <div class="method-icon">💵</div>
-        <div class="method-name">Contanti</div>
-        <div class="method-amount" id="balance-contanti">€0</div>
+    <!-- GRAFICO BIRRE NEL TEMPO -->
+    <section class="chart-section">
+      <div class="section-title">📈 Birre ultimi 6 mesi</div>
+      <canvas id="beer-chart" height="180"></canvas>
+    </section>
+
+    <!-- SOLDI: PORTAFOGLIO VISUALE -->
+    <section class="wallet-section">
+      <div class="wallet-header">
+        <h3>💰 Il Mio Portafoglio</h3>
+        <div class="total-money" id="total-balance">€0,00</div>
       </div>
-      <div class="method-card satispay" data-method="satispay">
-        <div class="method-icon">🔴</div>
-        <div class="method-name">Satispay</div>
-        <div class="method-amount" id="balance-satispay">€0</div>
-      </div>
-      <div class="method-card hype" data-method="hype">
-        <div class="method-icon">🔵</div>
-        <div class="method-name">Hype</div>
-        <div class="method-amount" id="balance-hype">€0</div>
+      
+      <div class="wallet-cards">
+        <div class="wallet-card contanti">
+          <div class="card-header">
+            <span class="card-icon">💵</span>
+            <span class="card-name">Contanti</span>
+          </div>
+          <div class="card-balance" id="balance-contanti">€0</div>
+          <div class="card-actions">
+            <button class="card-btn" data-action="income" data-method="contanti">+ Entrata</button>
+            <button class="card-btn" data-action="expense" data-method="contanti">- Spesa</button>
+          </div>
+        </div>
+
+        <div class="wallet-card satispay">
+          <div class="card-header">
+            <span class="card-icon">🔴</span>
+            <span class="card-name">Satispay</span>
+          </div>
+          <div class="card-balance" id="balance-satispay">€0</div>
+          <div class="card-actions">
+            <button class="card-btn" data-action="income" data-method="satispay">+ Entrata</button>
+            <button class="card-btn" data-action="expense" data-method="satispay">- Spesa</button>
+          </div>
+        </div>
+
+        <div class="wallet-card hype">
+          <div class="card-header">
+            <span class="card-icon">🔵</span>
+            <span class="card-name">Hype</span>
+          </div>
+          <div class="card-balance" id="balance-hype">€0</div>
+          <div class="card-actions">
+            <button class="card-btn" data-action="income" data-method="hype">+ Entrata</button>
+            <button class="card-btn" data-action="expense" data-method="hype">- Spesa</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -78,16 +109,20 @@
     <section class="stats-section">
       <div class="section-title">📊 Statistiche mese</div>
       <div class="stat-item">
-        <span>Top categoria</span>
+        <span>💸 Spesa totale</span>
+        <strong id="stat-total-expenses">€0</strong>
+      </div>
+      <div class="stat-item">
+        <span>💰 Entrate totali</span>
+        <strong id="stat-total-income">€0</strong>
+      </div>
+      <div class="stat-item">
+        <span>📦 Top categoria</span>
         <strong id="stat-top-category">-</strong>
       </div>
       <div class="stat-item">
-        <span>Metodo più usato</span>
-        <strong id="stat-top-method">-</strong>
-      </div>
-      <div class="stat-item">
-        <span>Spesa media</span>
-        <strong id="stat-avg-expense">€0</strong>
+        <span>🍺 Speso in birre</span>
+        <strong id="stat-beer-spent">€0</strong>
       </div>
     </section>
 
@@ -174,6 +209,11 @@
           <input type="number" id="input-beer-count" class="form-input" min="1" value="1">
         </div>
 
+        <div class="form-group" id="group-friend" style="display: none;">
+          <label class="form-label">Chi ha bevuto?</label>
+          <select id="input-friend" class="form-input"></select>
+        </div>
+
         <div class="form-group" id="group-method">
           <label class="form-label">Metodo</label>
           <select id="input-method" class="form-input" required>
@@ -224,6 +264,27 @@
         <div class="form-actions">
           <button type="submit" class="btn-primary">Crea</button>
           <button type="button" class="btn-secondary" id="btn-cancel-deposit">Annulla</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL AMICO -->
+  <div class="modal" id="modal-friend">
+    <div class="modal-sheet">
+      <h3 class="modal-title">Aggiungi amico</h3>
+      <form id="form-friend">
+        <div class="form-group">
+          <label class="form-label">Nome</label>
+          <input type="text" id="friend-name" class="form-input" required placeholder="es: Marco">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Emoji (opzionale)</label>
+          <input type="text" id="friend-emoji" class="form-input" placeholder="es: 😎" maxlength="2">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Aggiungi</button>
+          <button type="button" class="btn-secondary" id="btn-cancel-friend">Annulla</button>
         </div>
       </form>
     </div>
