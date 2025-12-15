@@ -60,22 +60,36 @@ function saveFriends() {
   localStorage.setItem(FRIENDS_KEY, JSON.stringify(friends));
 }
 
+// Utility per aprire e chiudere modali
+function toggleModal(modal, show = true) {
+  if (show) {
+    modal.classList.add('show');
+    modal.style.pointerEvents = 'all';
+    modal.style.display = 'flex';
+  } else {
+    modal.classList.remove('show');
+    modal.style.pointerEvents = 'none';
+    modal.style.display = 'none';
+  }
+}
+
+// Utility per aggiungere eventi a più elementi
+function addEventToElements(selector, event, handler) {
+  document.querySelectorAll(selector).forEach(el => el.addEventListener(event, handler));
+}
+
 // ============================================
 // EVENT LISTENERS
 // ============================================
 function setupEventListeners() {
   // FAB - Long press per quick menu
   let pressTimer;
-  
+  const toggleQuickMenu = () => quickMenu.classList.toggle('show');
+
   fab.addEventListener('mousedown', () => {
-    pressTimer = setTimeout(() => {
-      quickMenu.classList.toggle('show');
-    }, 300);
+    pressTimer = setTimeout(toggleQuickMenu, 300);
   });
-  
-  fab.addEventListener('mouseup', () => {
-    clearTimeout(pressTimer);
-  });
+  fab.addEventListener('mouseup', () => clearTimeout(pressTimer));
   
   fab.addEventListener('click', (e) => {
     if (!quickMenu.classList.contains('show')) {
@@ -84,23 +98,16 @@ function setupEventListeners() {
   });
   
   // Touch events per mobile
-  fab.addEventListener('touchstart', (e) => {
-    pressTimer = setTimeout(() => {
-      quickMenu.classList.toggle('show');
-    }, 300);
+  fab.addEventListener('touchstart', () => {
+    pressTimer = setTimeout(toggleQuickMenu, 300);
   });
   
-  fab.addEventListener('touchend', () => {
-    clearTimeout(pressTimer);
-  });
+  fab.addEventListener('touchend', () => clearTimeout(pressTimer));
   
   // Quick menu items
-  document.querySelectorAll('.quick-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const action = item.dataset.action;
-      quickMenu.classList.remove('show');
-      openTransactionModal(action);
-    });
+  addEventToElements('.quick-item', 'click', (e) => {
+    quickMenu.classList.remove('show');
+    openTransactionModal(e.target.dataset.action);
   });
   
   // Close quick menu on outside click
@@ -111,63 +118,22 @@ function setupEventListeners() {
   });
   
   // Wallet card buttons
-  document.querySelectorAll('.card-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const action = btn.dataset.action;
-      const method = btn.dataset.method;
-      openTransactionModal(action, null, method);
-    });
+  addEventToElements('.card-btn', 'click', (e) => {
+    e.stopPropagation();
+    openTransactionModal(e.target.dataset.action, null, e.target.dataset.method);
   });
   
-  // Modal transaction
-  document.getElementById('btn-cancel').addEventListener('click', closeTransactionModal);
+  // Modali
+  document.getElementById('btn-cancel').addEventListener('click', () => toggleModal(modalTransaction, false));
   formTransaction.addEventListener('submit', handleTransactionSubmit);
   document.getElementById('btn-delete').addEventListener('click', handleDelete);
   
-  // Type change
-  document.getElementById('input-type').addEventListener('change', handleTypeChange);
-  
-  // Category change (per birre)
-  document.getElementById('input-category').addEventListener('change', (e) => {
-    const beerGroup = document.getElementById('group-beer');
-    const friendGroup = document.getElementById('group-friend');
-    const isBeer = e.target.value === 'Birra';
-    beerGroup.style.display = isBeer ? 'block' : 'none';
-    friendGroup.style.display = isBeer ? 'block' : 'none';
-    if (isBeer) updateFriendSelect();
-  });
-  
-  // Filters
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentFilter = btn.dataset.filter;
-      renderTransactions();
-    });
-  });
-  
-  // New deposit
-  document.getElementById('btn-new-deposit').addEventListener('click', () => {
-    modalDeposit.classList.add('show');
-  });
-  
-  document.getElementById('btn-cancel-deposit').addEventListener('click', () => {
-    modalDeposit.classList.remove('show');
-  });
-  
+  document.getElementById('btn-new-deposit').addEventListener('click', () => toggleModal(modalDeposit, true));
+  document.getElementById('btn-cancel-deposit').addEventListener('click', () => toggleModal(modalDeposit, false));
   formDeposit.addEventListener('submit', handleDepositSubmit);
   
-  // New friend
-  document.getElementById('btn-add-friend').addEventListener('click', () => {
-    modalFriend.classList.add('show');
-  });
-  
-  document.getElementById('btn-cancel-friend').addEventListener('click', () => {
-    modalFriend.classList.remove('show');
-  });
-  
+  document.getElementById('btn-add-friend').addEventListener('click', () => toggleModal(modalFriend, true));
+  document.getElementById('btn-cancel-friend').addEventListener('click', () => toggleModal(modalFriend, false));
   formFriend.addEventListener('submit', handleFriendSubmit);
   
   // Export/Import
@@ -178,14 +144,18 @@ function setupEventListeners() {
   document.getElementById('file-import').addEventListener('change', importData);
   
   // Close modal on backdrop click
-  modalTransaction.addEventListener('click', (e) => {
-    if (e.target === modalTransaction) closeTransactionModal();
+  [modalTransaction, modalDeposit, modalFriend].forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) toggleModal(modal, false);
+    });
   });
-  modalDeposit.addEventListener('click', (e) => {
-    if (e.target === modalDeposit) modalDeposit.classList.remove('show');
-  });
-  modalFriend.addEventListener('click', (e) => {
-    if (e.target === modalFriend) modalFriend.classList.remove('show');
+  
+  // Filtro
+  addEventToElements('.filter-btn', 'click', (e) => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    currentFilter = e.target.dataset.filter;
+    renderTransactions();
   });
 }
 
@@ -357,7 +327,7 @@ function handleDepositSubmit(e) {
   });
   
   saveDeposits();
-  modalDeposit.classList.remove('show');
+  toggleModal(modalDeposit, false);
   formDeposit.reset();
   render();
 }
@@ -375,7 +345,7 @@ function handleFriendSubmit(e) {
   });
   
   saveFriends();
-  modalFriend.classList.remove('show');
+  toggleModal(modalFriend, false);
   formFriend.reset();
   render();
 }
