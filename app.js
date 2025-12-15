@@ -69,8 +69,10 @@ function saveDeposits() {
 function toggleModal(modal, show = true) {
   if (show) {
     modal.classList.add('show');
+    document.body.classList.add('modal-open');
   } else {
     modal.classList.remove('show');
+    document.body.classList.remove('modal-open'); 
   }
 }
 
@@ -153,16 +155,28 @@ function setupEventListeners() {
   document.getElementById('file-import').addEventListener('change', importData);
   
   // Close modal on backdrop click
-  [modalTransaction, modalDeposit, modalDepositManage].forEach(modal => {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        toggleModal(modal, false);
-        if (modal === modalTransaction) {
-          closeTransactionModal();
-        }
+// Close modal on backdrop click
+[modalTransaction, modalDeposit, modalDepositManage].forEach(modal => {
+  modal.addEventListener('touchstart', (e) => {  // ← touchstart invece di click
+    if (e.target === modal) {
+      e.preventDefault();
+      toggleModal(modal, false);
+      if (modal === modalTransaction) {
+        closeTransactionModal();
       }
-    });
+    }
   });
+  
+  // Mantieni anche click per desktop
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      toggleModal(modal, false);
+      if (modal === modalTransaction) {
+        closeTransactionModal();
+      }
+    }
+  });
+});
   
   // Filtro
   addEventToElements('.filter-btn', 'click', (e) => {
