@@ -1,107 +1,234 @@
 <!doctype html>
 <html lang="it">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MiraConti</title>
+  <title>MiraConti 2.0</title>
   <meta name="theme-color" content="#020617">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
   <main class="app">
 
+    <!-- HEADER -->
     <header class="app-header">
       <h1 class="app-title">MiraConti</h1>
       <p class="subtitle">Non spendere tutto in birre 🍺</p>
     </header>
 
-    <!-- SEZIONE DEDICATA BIRRA -->
-    <section class="beer-section">
-      <div class="beer-counter">
-        <h2>🍺 Birre mese</h2>
-        <strong id="beer-month">0</strong>
+    <!-- 🍺 BEER COUNTER - HERO -->
+    <section class="beer-hero">
+      <div class="beer-icon-big">🍺</div>
+      <div class="beer-stats">
+        <div class="beer-main">
+          <span class="beer-label">Birre questo mese</span>
+          <span class="beer-count" id="beer-count">0</span>
+        </div>
+        <div class="beer-secondary">
+          <div class="beer-stat">
+            <span class="stat-value" id="beer-total-spent">€0</span>
+            <span class="stat-label">spesi</span>
+          </div>
+          <div class="beer-stat">
+            <span class="stat-value" id="beer-avg-price">€0</span>
+            <span class="stat-label">media</span>
+          </div>
+        </div>
       </div>
     </section>
 
-
-    <!-- FILTRI METODO -->
-    <div class="filter-buttons">
-      <button class="filter-btn active" data-method="">Tutti</button>
-      <button class="filter-btn contanti" data-method="contanti">Contanti</button>
-      <button class="filter-btn satispay" data-method="satispay">Satispay</button>
-      <button class="filter-btn hype" data-method="hype">Hype</button>
-    </div>
-
-    <!-- FILTRO MESE + CATEGORIA -->
-    <div class="filter-row">
-      <select id="filter-month"></select>
-      <select id="filter-category">
-        <option value="">Tutte le categorie</option>
-        <option>Birra</option>
-        <option>Cibo</option>
-        <option>Trasporti</option>
-        <option>Svago</option>
-        <option>Altro</option>
-      </select>
-      <button id="clear-filters">Reset</button>
-    </div>
-
-    <!-- LISTA SPESE -->
-    <section>
-      <div id="expenses-list" class="expenses"></div>
+    <!-- SALDO TOTALE -->
+    <section class="balance-card">
+      <div class="balance-label">💰 Saldo disponibile</div>
+      <div class="balance-amount" id="total-balance">€0,00</div>
     </section>
 
-    <!-- TOTALI -->
-    <footer class="totals">
-      <div>Totale mese<strong id="total-month">€0,00</strong></div>
-      <div>Contanti<strong id="total-contanti">€0,00</strong></div>
-      <div>Satispay<strong id="total-satispay">€0,00</strong></div>
-      <div>Hype<strong id="total-hype">€0,00</strong></div>
-    </footer>
+    <!-- METODI PAGAMENTO -->
+    <section class="methods-grid">
+      <div class="method-card contanti" data-method="contanti">
+        <div class="method-icon">💵</div>
+        <div class="method-name">Contanti</div>
+        <div class="method-amount" id="balance-contanti">€0</div>
+      </div>
+      <div class="method-card satispay" data-method="satispay">
+        <div class="method-icon">🔴</div>
+        <div class="method-name">Satispay</div>
+        <div class="method-amount" id="balance-satispay">€0</div>
+      </div>
+      <div class="method-card hype" data-method="hype">
+        <div class="method-icon">🔵</div>
+        <div class="method-name">Hype</div>
+        <div class="method-amount" id="balance-hype">€0</div>
+      </div>
+    </section>
 
-    <!-- GRAFICO -->
-    <canvas id="chart" height="200"></canvas>
+    <!-- DEPOSITI -->
+    <section class="deposits-section">
+      <div class="section-title">
+        🏦 Depositi
+        <button class="btn-icon" id="btn-new-deposit">+</button>
+      </div>
+      <div id="deposits-list"></div>
+    </section>
 
-    <!-- FAB -->
-    <button id="fab-add" class="fab">+</button>
+    <!-- STATISTICHE RAPIDE -->
+    <section class="stats-section">
+      <div class="section-title">📊 Statistiche mese</div>
+      <div class="stat-item">
+        <span>Top categoria</span>
+        <strong id="stat-top-category">-</strong>
+      </div>
+      <div class="stat-item">
+        <span>Metodo più usato</span>
+        <strong id="stat-top-method">-</strong>
+      </div>
+      <div class="stat-item">
+        <span>Spesa media</span>
+        <strong id="stat-avg-expense">€0</strong>
+      </div>
+    </section>
 
-    <!-- MODAL -->
-    <div id="modal" class="modal hidden">
-      <div class="modal-sheet">
-        <h3 id="modal-title">Aggiungi spesa</h3>
-        <form id="modal-form">
-          <input id="m-amount" type="number" step="0.01" required placeholder="Importo €">
-          <input id="m-date" type="date" required>
-          <select id="m-category">
+    <!-- FILTRI -->
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">Tutti</button>
+      <button class="filter-btn" data-filter="expense">Spese</button>
+      <button class="filter-btn" data-filter="income">Entrate</button>
+      <button class="filter-btn" data-filter="deposit">Depositi</button>
+    </div>
+
+    <!-- TRANSAZIONI -->
+    <section class="transactions-list" id="transactions-list"></section>
+
+    <!-- BACKUP -->
+    <div style="text-align: center; margin: 20px 0;">
+      <button class="btn-secondary" id="btn-export">📦 Esporta dati</button>
+      <button class="btn-secondary" id="btn-import">📥 Importa dati</button>
+      <input type="file" id="file-import" accept=".json" style="display: none;">
+    </div>
+
+  </main>
+
+  <!-- FAB -->
+  <button class="fab" id="fab">+</button>
+
+  <!-- QUICK MENU -->
+  <div class="quick-menu" id="quick-menu">
+    <div class="quick-item" data-action="expense">
+      <span class="quick-icon">💸</span>
+      <span>Spesa</span>
+    </div>
+    <div class="quick-item" data-action="income">
+      <span class="quick-icon">💰</span>
+      <span>Entrata</span>
+    </div>
+    <div class="quick-item" data-action="deposit">
+      <span class="quick-icon">🏦</span>
+      <span>Sposta in deposito</span>
+    </div>
+  </div>
+
+  <!-- MODAL TRANSAZIONE -->
+  <div class="modal" id="modal-transaction">
+    <div class="modal-sheet">
+      <h3 class="modal-title" id="modal-title">Nuova transazione</h3>
+      <form id="form-transaction">
+        
+        <div class="form-group">
+          <label class="form-label">Tipo</label>
+          <select id="input-type" class="form-input" required>
+            <option value="expense">💸 Spesa</option>
+            <option value="income">💰 Entrata</option>
+            <option value="deposit">🏦 Deposito</option>
+            <option value="withdrawal">🏧 Prelievo da deposito</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Importo (€)</label>
+          <input type="number" id="input-amount" class="form-input" step="0.01" required placeholder="0.00">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Data</label>
+          <input type="date" id="input-date" class="form-input" required>
+        </div>
+
+        <div class="form-group" id="group-category">
+          <label class="form-label">Categoria</label>
+          <select id="input-category" class="form-input">
             <option>Birra</option>
             <option>Cibo</option>
             <option>Trasporti</option>
             <option>Svago</option>
+            <option>Stipendio</option>
+            <option>Regalo</option>
             <option>Altro</option>
           </select>
-          <input id="m-beer-count" type="number" min="1" value="1" placeholder="Quantità birre" style="display:none">
+        </div>
 
-          <select id="m-method">
-            <option value="contanti">Contanti</option>
-            <option value="satispay">Satispay</option>
-            <option value="hype">Hype</option>
+        <div class="form-group" id="group-beer" style="display: none;">
+          <label class="form-label">Quante birre? 🍺</label>
+          <input type="number" id="input-beer-count" class="form-input" min="1" value="1">
+        </div>
+
+        <div class="form-group" id="group-method">
+          <label class="form-label">Metodo</label>
+          <select id="input-method" class="form-input" required>
+            <option value="contanti">💵 Contanti</option>
+            <option value="satispay">🔴 Satispay</option>
+            <option value="hype">🔵 Hype</option>
           </select>
-          <input id="m-note" placeholder="Nota (opzionale)">
-          <button class="primary" type="submit">Salva</button>
-          <button id="modal-cancel" type="button">Annulla</button>
-        </form>
-      </div>
-    </div>
+        </div>
 
-  </main>
+        <div class="form-group" id="group-deposit" style="display: none;">
+          <label class="form-label">Deposito</label>
+          <select id="input-deposit" class="form-input"></select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nota (opzionale)</label>
+          <input type="text" id="input-note" class="form-input" placeholder="es: con Marco">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tags (opzionale)</label>
+          <input type="text" id="input-tags" class="form-input" placeholder="es: amici, festa">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Salva</button>
+          <button type="button" class="btn-secondary" id="btn-cancel">Annulla</button>
+          <button type="button" class="btn-danger" id="btn-delete" style="display: none;">Elimina</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DEPOSITO -->
+  <div class="modal" id="modal-deposit">
+    <div class="modal-sheet">
+      <h3 class="modal-title">Nuovo deposito</h3>
+      <form id="form-deposit">
+        <div class="form-group">
+          <label class="form-label">Nome</label>
+          <input type="text" id="deposit-name" class="form-input" required placeholder="es: Vacanze">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Colore</label>
+          <input type="color" id="deposit-color" class="form-input" value="#10b981">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Crea</button>
+          <button type="button" class="btn-secondary" id="btn-cancel-deposit">Annulla</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
-
 </html>
