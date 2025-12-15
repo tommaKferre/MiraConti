@@ -83,6 +83,9 @@ function addEventToElements(selector, event, handler) {
 // ============================================
 // EVENT LISTENERS
 // ============================================
+// Deposit Management Variable
+let currentDepositId = null;
+
 function setupEventListeners() {
   // FAB - gestione click e long-press compatibile mobile/desktop
   let fabPressTimer = null;
@@ -139,20 +142,6 @@ function setupEventListeners() {
 
   // Elimina deposito
   document.getElementById('btn-delete-deposit').addEventListener('click', handleDeleteDeposit);
-  // ============================================
-  // ELIMINA DEPOSITO
-  // ============================================
-  function handleDeleteDeposit() {
-    if (currentDepositId == null) return;
-    const deposit = deposits.find(d => d.id === currentDepositId);
-    if (!deposit) return;
-    if (!confirm(`Vuoi eliminare il deposito "${deposit.name}"? Tutte le transazioni collegate rimarranno, ma non saranno più associate a questo deposito.`)) return;
-    // Rimuovi il deposito
-    deposits = deposits.filter(d => d.id !== currentDepositId);
-    saveDeposits();
-    render();
-    toggleModal(modalDepositManage, false);
-  }
   
   // Wallet card buttons
   addEventToElements('.card-btn', 'click', (e) => {
@@ -223,7 +212,17 @@ function setupEventListeners() {
 // ============================================
 // DEPOSIT MANAGEMENT (NUOVO!)
 // ============================================
-let currentDepositId = null;
+function handleDeleteDeposit() {
+  if (currentDepositId == null) return;
+  const deposit = deposits.find(d => d.id === currentDepositId);
+  if (!deposit) return;
+  if (!confirm(`Vuoi eliminare il deposito "${deposit.name}"? Tutte le transazioni collegate rimarranno, ma non saranno più associate a questo deposito.`)) return;
+  // Rimuovi il deposito
+  deposits = deposits.filter(d => d.id !== currentDepositId);
+  saveDeposits();
+  render();
+  toggleModal(modalDepositManage, false);
+}
 
 function openDepositManage(depositId) {
   currentDepositId = depositId;
