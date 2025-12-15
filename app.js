@@ -84,42 +84,75 @@ function addEventToElements(selector, event, handler) {
 // EVENT LISTENERS
 // ============================================
 function setupEventListeners() {
-  // FAB - Long press per quick menu
-  let pressTimer;
-  const toggleQuickMenu = () => quickMenu.classList.toggle('show');
+  // FAB - gestione click e long-press compatibile mobile/desktop
+  let fabPressTimer = null;
+  let fabLongPress = false;
+  const fabLongPressTime = 500; // ms
 
-  fab.addEventListener('mousedown', () => {
-    pressTimer = setTimeout(toggleQuickMenu, 300);
-  });
-  fab.addEventListener('mouseup', () => clearTimeout(pressTimer));
-  
+  const openQuickMenu = () => {
+    quickMenu.classList.add('show');
+  };
+  const closeQuickMenu = () => {
+    quickMenu.classList.remove('show');
+  };
+
+  // Click normale: sempre apri modal transazione
   fab.addEventListener('click', (e) => {
-    if (!quickMenu.classList.contains('show')) {
-      openTransactionModal('expense');
+    if (fabLongPress) {
+      fabLongPress = false;
+      return; // Evita doppio trigger dopo long-press
     }
+    closeQuickMenu();
+    openTransactionModal();
   });
-  
-  // Touch events per mobile
-  fab.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    pressTimer = setTimeout(toggleQuickMenu, 300);
-  });
-  
-  fab.addEventListener('touchend', () => clearTimeout(pressTimer));
-  
+
+  // Long-press: mostra quick menu
+  const fabPressStart = (e) => {
+    fabLongPress = false;
+    fabPressTimer = setTimeout(() => {
+      fabLongPress = true;
+      openQuickMenu();
+    }, fabLongPressTime);
+  };
+  const fabPressEnd = (e) => {
+    clearTimeout(fabPressTimer);
+  };
+  fab.addEventListener('mousedown', fabPressStart);
+  fab.addEventListener('touchstart', fabPressStart);
+  fab.addEventListener('mouseup', fabPressEnd);
+  fab.addEventListener('mouseleave', fabPressEnd);
+  fab.addEventListener('touchend', fabPressEnd);
+
   // Quick menu items
   addEventToElements('.quick-item', 'click', (e) => {
+    closeQuickMenu();
     const action = e.currentTarget.dataset.action;
-    quickMenu.classList.remove('show');
     openTransactionModal(action);
   });
-  
+
   // Close quick menu on outside click
   document.addEventListener('click', (e) => {
-    if (!fab.contains(e.target) && !quickMenu.contains(e.target)) {
-      quickMenu.classList.remove('show');
+    if (!quickMenu.contains(e.target) && e.target !== fab) {
+      closeQuickMenu();
     }
   });
+
+  // Elimina deposito
+  document.getElementById('btn-delete-deposit').addEventListener('click', handleDeleteDeposit);
+  // ============================================
+  // ELIMINA DEPOSITO
+  // ============================================
+  function handleDeleteDeposit() {
+    if (currentDepositId == null) return;
+    const deposit = deposits.find(d => d.id === currentDepositId);
+    if (!deposit) return;
+    if (!confirm(`Vuoi eliminare il deposito "${deposit.name}"? Tutte le transazioni collegate rimarranno, ma non saranno più associate a questo deposito.`)) return;
+    // Rimuovi il deposito
+    deposits = deposits.filter(d => d.id !== currentDepositId);
+    saveDeposits();
+    render();
+    toggleModal(modalDepositManage, false);
+  }
   
   // Wallet card buttons
   addEventToElements('.card-btn', 'click', (e) => {

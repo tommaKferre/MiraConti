@@ -738,15 +738,15 @@ body {
 .btn-primary,
 .btn-secondary,
 .btn-danger {
-  flex: 1;
-  padding: 14px;
-  border-radius: 12px;
-  border: none;
-  font-weight: 600;
+  display: inline-block;
   font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius);
+  padding: 12px 20px;
+  margin: 4px 0;
   cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
+  transition: background 0.2s, color 0.2s;
 }
 
 .btn-primary {
